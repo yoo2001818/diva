@@ -81,4 +81,8 @@ export class CharacterData
   set textContent(value: string) {
     this.data = value;
   }
+
+  _isEqualNodeSelf(otherNode: Node | null): boolean {
+    return this.data === (otherNode as CharacterData).data;
+  }
 }

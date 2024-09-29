@@ -1,6 +1,7 @@
 import { Document } from './Document';
 import { Element } from './Element';
 import { NodeList, NodeListImpl } from './NodeList';
+import { ensurePreInsertionValidity } from './utils/node';
 
 export class Node {
   static readonly ELEMENT_NODE: number = 1;
@@ -118,22 +119,54 @@ export class Node {
     return null;
   }
 
-  set textContent(value: string | null) {}
+  set textContent(_value: string | null) {}
 
   normalize(): void {
     throw new Error('Method not implemented.');
   }
 
   cloneNode(deep: boolean = false): Node {
+    const node = this._cloneNodeSelf();
+    if (deep) {
+      for (const child of this._childNodes) {
+        const childNew = child.cloneNode(deep);
+        node.appendChild(childNew);
+      }
+    }
+    return node;
+  }
+
+  _cloneNodeSelf(): Node {
     throw new Error('Method not implemented.');
   }
 
   isEqualNode(otherNode: Node | null): boolean {
+    if (otherNode == null) {
+      return false;
+    }
+    if (this.nodeType !== otherNode.nodeType) {
+      return false;
+    }
+    if (!this._isEqualNodeSelf(otherNode)) {
+      return false;
+    }
+    if (this._childNodes.length !== otherNode._childNodes.length) {
+      return false;
+    }
+    for (let i = 0; i < this._childNodes.length; i += 1) {
+      if (!this._childNodes[i].isEqualNode(otherNode._childNodes[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  _isEqualNodeSelf(_otherNode: Node | null): boolean {
     throw new Error('Method not implemented.');
   }
 
   isSameNode(otherNode: Node | null): boolean {
-    throw new Error('Method not implemented.');
+    return this === otherNode;
   }
 
   static readonly DOCUMENT_POSITION_DISCONNECTED: number = 0x01;
@@ -148,7 +181,17 @@ export class Node {
   }
 
   contains(other: Node | null): boolean {
-    throw new Error('Method not implemented.');
+    if (other == null) {
+      return false;
+    }
+    let parent = other._parent;
+    while (parent != null) {
+      if (parent === this) {
+        return true;
+      }
+      parent = parent._parent;
+    }
+    return false;
   }
 
   lookupPrefix(namespace: string | null): string | null {
@@ -171,7 +214,7 @@ export class Node {
       }
       index = child._parentIndex!;
     }
-    // FIXME: Ensure pre-insertion validity
+    ensurePreInsertionValidity(this, node);
     if (node._parent != null) {
       node._parent.removeChild(node);
     }
@@ -190,11 +233,10 @@ export class Node {
   }
 
   replaceChild(node: Node, child: Node): Node {
-    // FIXME: Ensure node is not a inclusive ancestor of parent
     if (child.parentNode !== this) {
       throw new DOMException('', 'NotFoundError');
     }
-    // FIXME: Ensure pre-insertion validity
+    ensurePreInsertionValidity(this, node);
     const index = child._parentIndex!;
     this.removeChild(child);
     if (node._parent != null) {

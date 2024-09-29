@@ -275,4 +275,12 @@ export class Element
       this.appendChild(text);
     }
   }
+
+  _cloneNodeSelf(): Node {
+    throw new Error('Method not implemented.');
+  }
+
+  _isEqualNodeSelf(otherNode: Node | null): boolean {
+    throw new Error('Method not implemented.');
+  }
 }

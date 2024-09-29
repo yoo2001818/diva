@@ -23,4 +23,8 @@ export class Text extends CharacterData {
   get nodeName(): string {
     return '#text';
   }
+
+  _cloneNodeSelf(): Node {
+    return this.ownerDocument!.createTextNode(this.data);
+  }
 }
