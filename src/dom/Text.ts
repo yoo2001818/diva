@@ -1,9 +1,10 @@
 import { CharacterData } from './CharacterData';
+import { Document } from './Document';
 import { Node } from './Node';
 
 export class Text extends CharacterData {
-  constructor(data: string = '') {
-    super();
+  constructor(document: Document, data: string = '') {
+    super(document);
     this.data = data;
   }
 
@@ -21,9 +22,5 @@ export class Text extends CharacterData {
 
   get nodeName(): string {
     return '#text';
-  }
-
-  get nodeValue(): string | null {
-    return this.data;
   }
 }

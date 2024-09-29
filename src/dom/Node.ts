@@ -1,5 +1,6 @@
+import { Document } from './Document';
 import { Element } from './Element';
-import { NodeList } from './NodeList';
+import { NodeList, NodeListImpl } from './NodeList';
 
 export class Node {
   static readonly ELEMENT_NODE: number = 1;
@@ -15,6 +16,15 @@ export class Node {
   static readonly DOCUMENT_FRAGMENT_NODE: number = 11;
   static readonly NOTATION_NODE: number = 12; // legacy
 
+  _document: Document | null;
+  _parent: Node | null = null;
+  _parentIndex: number | null = null;
+  _childNodes: NodeListImpl = new NodeListImpl();
+
+  constructor(document: Document | null) {
+    this._document = document;
+  }
+
   get nodeType(): number {
     throw new Error('Method not implemented.');
   }
@@ -24,68 +34,91 @@ export class Node {
   }
 
   get baseURI(): string {
-    throw new Error('Method not implemented.');
+    return '';
   }
 
   get isConnected(): boolean {
-    throw new Error('Method not implemented.');
+    const root = this.getRootNode();
+    return root.nodeType === Node.DOCUMENT_NODE;
   }
 
   get ownerDocument(): Document | null {
-    throw new Error('Method not implemented.');
+    return this._document;
   }
 
-  getRootNode(options: GetRootNodeOptions = {}): Node {
-    throw new Error('Method not implemented.');
+  getRootNode(_options: GetRootNodeOptions = {}): Node {
+    let parent = this._parent;
+    while (parent != null && parent.parentNode != null) {
+      parent = parent.parentNode;
+    }
+    return parent!;
   }
 
   get parentNode(): Node | null {
-    throw new Error('Method not implemented.');
+    return this._parent;
   }
 
   get parentElement(): Element | null {
-    throw new Error('Method not implemented.');
+    let parent = this._parent;
+    while (parent != null) {
+      if (parent.nodeType === Node.ELEMENT_NODE) {
+        return parent as Element;
+      }
+      parent = parent.parentNode;
+    }
+    return null;
   }
 
   hasChildNodes(): boolean {
-    throw new Error('Method not implemented.');
+    return this._childNodes.length > 0;
   }
 
   get childNodes(): NodeList {
-    throw new Error('Method not implemented.');
+    return this._childNodes;
   }
 
   get firstChild(): Node | null {
-    throw new Error('Method not implemented.');
+    return this._childNodes[0] ?? null;
   }
 
   get lastChild(): Node | null {
-    throw new Error('Method not implemented.');
+    return this._childNodes[this._childNodes.length - 1] ?? null;
   }
 
   get previousSibling(): Node | null {
-    throw new Error('Method not implemented.');
+    if (this._parent == null) {
+      return null;
+    }
+    if (this._parentIndex == null || this._parentIndex <= 0) {
+      return null;
+    }
+    return this._parent._childNodes[this._parentIndex - 1];
   }
 
   get nextSibling(): Node | null {
-    throw new Error('Method not implemented.');
+    if (this._parent == null) {
+      return null;
+    }
+    if (
+      this._parentIndex == null ||
+      this._parentIndex >= this._parent._childNodes.length - 1
+    ) {
+      return null;
+    }
+    return this._parent._childNodes[this._parentIndex + 1];
   }
 
   get nodeValue(): string | null {
-    throw new Error('Method not implemented.');
+    return null;
   }
 
-  set nodeValue(value: string | null) {
-    throw new Error('Method not implemented.');
-  }
+  set nodeValue(_value: string | null) {}
 
   get textContent(): string | null {
-    throw new Error('Method not implemented.');
+    return null;
   }
 
-  set textContent(value: string | null) {
-    throw new Error('Method not implemented.');
-  }
+  set textContent(value: string | null) {}
 
   normalize(): void {
     throw new Error('Method not implemented.');
@@ -131,18 +164,60 @@ export class Node {
   }
 
   insertBefore(node: Node, child: Node | null): Node {
-    throw new Error('Method not implemented.');
+    let index = this._childNodes.length;
+    if (child != null) {
+      if (child.parentNode !== this) {
+        throw new DOMException('', 'NotFoundError');
+      }
+      index = child._parentIndex!;
+    }
+    // FIXME: Ensure pre-insertion validity
+    if (node._parent != null) {
+      node._parent.removeChild(node);
+    }
+    node._parent = this;
+    node._parentIndex = index;
+    this._childNodes.splice(index, 0, node);
+    for (let i = index + 1; i < this._childNodes.length; i += 1) {
+      const node = this._childNodes[i];
+      node._parentIndex = i;
+    }
+    return node;
   }
 
   appendChild(node: Node): Node {
-    throw new Error('Method not implemented.');
+    return this.insertBefore(node, null);
   }
 
   replaceChild(node: Node, child: Node): Node {
-    throw new Error('Method not implemented.');
+    // FIXME: Ensure node is not a inclusive ancestor of parent
+    if (child.parentNode !== this) {
+      throw new DOMException('', 'NotFoundError');
+    }
+    // FIXME: Ensure pre-insertion validity
+    const index = child._parentIndex!;
+    this.removeChild(child);
+    if (node._parent != null) {
+      node._parent.removeChild(node);
+    }
+    node._parent = this;
+    node._parentIndex = index;
+    this._childNodes[index] = node;
+    return child;
   }
 
   removeChild(child: Node): Node {
-    throw new Error('Method not implemented.');
+    if (child.parentNode !== this) {
+      throw new DOMException('', 'NotFoundError');
+    }
+    const index = child._parentIndex!;
+    child._parent = null;
+    child._parentIndex = null;
+    this._childNodes.splice(index, 1);
+    for (let i = index; i < this._childNodes.length; i += 1) {
+      const node = this._childNodes[i];
+      node._parentIndex = i;
+    }
+    return child;
   }
 }

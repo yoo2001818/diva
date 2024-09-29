@@ -5,3 +5,9 @@ export interface NodeList {
   get length(): number;
   item(index: number): Node | null;
 }
+
+export class NodeListImpl extends Array<Node> implements NodeList {
+  item(index: number): Node | null {
+    return this[index] ?? null;
+  }
+}

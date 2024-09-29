@@ -65,4 +65,20 @@ export class CharacterData
   get nextElementSibling(): Element | null {
     throw new Error('Method not implemented.');
   }
+
+  get nodeValue(): string | null {
+    return this.data;
+  }
+
+  set nodeValue(value: string) {
+    this.data = value;
+  }
+
+  get textContent(): string | null {
+    return this.data;
+  }
+
+  set textContent(value: string) {
+    this.data = value;
+  }
 }

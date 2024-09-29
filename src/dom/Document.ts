@@ -8,7 +8,8 @@ import { Text } from './Text';
 
 export class Document extends Node implements ParentNode, ChildNode {
   constructor() {
-    super();
+    super(null);
+    this._document = this;
   }
 
   get nodeType(): number {

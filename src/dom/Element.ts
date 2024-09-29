@@ -1,5 +1,6 @@
 import { Attr } from './Attr';
 import { ChildNode } from './ChildNode';
+import { Document } from './Document';
 import { DOMTokenList } from './DOMTokenList';
 import { HTMLCollection } from './HTMLCollection';
 import { Node } from './Node';
@@ -12,8 +13,8 @@ export class Element
   implements ParentNode, ChildNode, NonDocumentTypeChildNode
 {
   tagName: string;
-  constructor(tagName: string) {
-    super();
+  constructor(document: Document, tagName: string) {
+    super(document);
     this.tagName = tagName.toUpperCase();
   }
 
@@ -258,5 +259,20 @@ export class Element
 
   get nextElementSibling(): Element | null {
     throw new Error('Method not implemented.');
+  }
+
+  get textContent(): string | null {
+    return this._childNodes.map((v) => v.textContent).join('');
+  }
+
+  set textContent(value: string) {
+    const childNodes = [...this._childNodes];
+    for (const node of childNodes) {
+      this.removeChild(node);
+    }
+    if (value !== '') {
+      const text = this._document!.createTextNode(value);
+      this.appendChild(text);
+    }
   }
 }
