@@ -1,11 +1,23 @@
 import { Attr } from './Attr';
+import { CDATASection } from './CDATASection';
 import { ChildNode } from './ChildNode';
+import { Comment } from './Comment';
 import { Element } from './Element';
-import { HTMLCollection } from './HTMLCollection';
+import { HTMLCollection, HTMLCollectionImpl } from './HTMLCollection';
 import { Node } from './Node';
 import { NodeList } from './NodeList';
 import { ParentNode } from './ParentNode';
 import { Text } from './Text';
+import {
+  elementAfter,
+  elementAppend,
+  elementBefore,
+  elementPrepend,
+  elementQuerySelector,
+  elementQuerySelectorAll,
+  elementReplaceChildren,
+  elementReplaceWith,
+} from './utils/element';
 
 export class Document extends Node implements ParentNode, ChildNode {
   constructor() {
@@ -62,7 +74,7 @@ export class Document extends Node implements ParentNode, ChildNode {
   }
 
   get documentElement(): Element | null {
-    throw new Error('Method not implemented.');
+    return (this._childNodes[0] as Element) ?? null;
   }
 
   getElementsByTagName(qualifiedName: string): HTMLCollection {
@@ -82,17 +94,17 @@ export class Document extends Node implements ParentNode, ChildNode {
 
   createElement(
     localName: string,
-    options?: string | ElementCreationOptions,
+    _options?: string | ElementCreationOptions,
   ): Element {
-    throw new Error('Method not implemented.');
+    return new Element(this, localName);
   }
 
   createElementNS(
-    namespace: string | null,
+    _namespace: string | null,
     qualifiedName: string,
-    options?: string | ElementCreationOptions,
+    _options?: string | ElementCreationOptions,
   ): Element {
-    throw new Error('Method not implemented.');
+    return new Element(this, qualifiedName);
   }
 
   createDocumentFragment(): DocumentFragment {
@@ -100,15 +112,15 @@ export class Document extends Node implements ParentNode, ChildNode {
   }
 
   createTextNode(data: string): Text {
-    throw new Error('Method not implemented.');
+    return new Text(this, data);
   }
 
   createCDATASection(data: string): CDATASection {
-    throw new Error('Method not implemented.');
+    return new CDATASection(this, data);
   }
 
   createComment(data: string): Comment {
-    throw new Error('Method not implemented.');
+    return new Comment(this, data);
   }
 
   createProcessingInstruction(
@@ -127,11 +139,11 @@ export class Document extends Node implements ParentNode, ChildNode {
   }
 
   createAttribute(localName: string): Attr {
-    throw new Error('Method not implemented.');
+    return new Attr(this, localName);
   }
 
-  createAttributeNS(namespace: string | null, qualifiedName: string): Attr {
-    throw new Error('Method not implemented.');
+  createAttributeNS(_namespace: string | null, qualifiedName: string): Attr {
+    return new Attr(this, qualifiedName);
   }
 
   createEvent(interfaceName: string): Event {
@@ -159,54 +171,60 @@ export class Document extends Node implements ParentNode, ChildNode {
   }
 
   get children(): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return new HTMLCollectionImpl(
+      this._childNodes.filter(
+        (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
+      ),
+    );
   }
 
   get firstElementChild(): Element | null {
-    throw new Error('Method not implemented.');
+    const children = this.children;
+    return children[0] ?? null;
   }
 
   get lastElementChild(): Element | null {
-    throw new Error('Method not implemented.');
+    const children = this.children;
+    return children[children.length - 1] ?? null;
   }
 
   get childElementCount(): number {
-    throw new Error('Method not implemented.');
+    return this.children.length;
   }
 
   prepend(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementPrepend(this, nodes);
   }
 
   append(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementAppend(this, nodes);
   }
 
   replaceChildren(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementReplaceChildren(this, nodes);
   }
 
   querySelector(selectors: string): Element | null {
-    throw new Error('Method not implemented.');
+    return elementQuerySelector(this, selectors);
   }
 
   querySelectorAll(selectors: string): NodeList {
-    throw new Error('Method not implemented.');
+    return elementQuerySelectorAll(this, selectors);
   }
 
   before(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementBefore(this, nodes);
   }
 
   after(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementAfter(this, nodes);
   }
 
   replaceWith(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementReplaceWith(this, nodes);
   }
 
   remove(): void {
-    throw new Error('Method not implemented.');
+    // Noop
   }
 }

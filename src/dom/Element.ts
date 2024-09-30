@@ -2,12 +2,25 @@ import { Attr } from './Attr';
 import { ChildNode } from './ChildNode';
 import { Document } from './Document';
 import { DOMTokenList } from './DOMTokenList';
-import { HTMLCollection } from './HTMLCollection';
+import { HTMLCollection, HTMLCollectionImpl } from './HTMLCollection';
 import { NamedNodeMap } from './NamedNodeMap';
 import { Node } from './Node';
 import { NodeList } from './NodeList';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
 import { ParentNode } from './ParentNode';
+import {
+  elementAfter,
+  elementAppend,
+  elementBefore,
+  elementNextElementSibling,
+  elementPrepend,
+  elementPreviousElementSibling,
+  elementQuerySelector,
+  elementQuerySelectorAll,
+  elementRemove,
+  elementReplaceChildren,
+  elementReplaceWith,
+} from './utils/element';
 
 export class Element
   extends Node
@@ -233,63 +246,69 @@ export class Element
   }
 
   get children(): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return new HTMLCollectionImpl(
+      this._childNodes.filter(
+        (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
+      ),
+    );
   }
 
   get firstElementChild(): Element | null {
-    throw new Error('Method not implemented.');
+    const children = this.children;
+    return children[0] ?? null;
   }
 
   get lastElementChild(): Element | null {
-    throw new Error('Method not implemented.');
+    const children = this.children;
+    return children[children.length - 1] ?? null;
   }
 
   get childElementCount(): number {
-    throw new Error('Method not implemented.');
+    return this.children.length;
   }
 
   prepend(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementPrepend(this, nodes);
   }
 
   append(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementAppend(this, nodes);
   }
 
   replaceChildren(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementReplaceChildren(this, nodes);
   }
 
   querySelector(selectors: string): Element | null {
-    throw new Error('Method not implemented.');
+    return elementQuerySelector(this, selectors);
   }
 
   querySelectorAll(selectors: string): NodeList {
-    throw new Error('Method not implemented.');
+    return elementQuerySelectorAll(this, selectors);
   }
 
   before(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementBefore(this, nodes);
   }
 
   after(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementAfter(this, nodes);
   }
 
   replaceWith(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementReplaceWith(this, nodes);
   }
 
   remove(): void {
-    this._parent?.removeChild(this);
+    return elementRemove(this);
   }
 
   get previousElementSibling(): Element | null {
-    throw new Error('Method not implemented.');
+    return elementPreviousElementSibling(this);
   }
 
   get nextElementSibling(): Element | null {
-    throw new Error('Method not implemented.');
+    return elementNextElementSibling(this);
   }
 
   get textContent(): string | null {

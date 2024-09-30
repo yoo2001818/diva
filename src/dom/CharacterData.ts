@@ -2,6 +2,14 @@ import { ChildNode } from './ChildNode';
 import { Element } from './Element';
 import { Node } from './Node';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
+import {
+  elementAfter,
+  elementBefore,
+  elementNextElementSibling,
+  elementPreviousElementSibling,
+  elementRemove,
+  elementReplaceWith,
+} from './utils/element';
 
 export class CharacterData
   extends Node
@@ -43,27 +51,27 @@ export class CharacterData
   }
 
   before(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementBefore(this, nodes);
   }
 
   after(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementAfter(this, nodes);
   }
 
   replaceWith(...nodes: (Node | string)[]): void {
-    throw new Error('Method not implemented.');
+    return elementReplaceWith(this, nodes);
   }
 
   remove(): void {
-    throw new Error('Method not implemented.');
+    return elementRemove(this);
   }
 
   get previousElementSibling(): Element | null {
-    throw new Error('Method not implemented.');
+    return elementPreviousElementSibling(this);
   }
 
   get nextElementSibling(): Element | null {
-    throw new Error('Method not implemented.');
+    return elementNextElementSibling(this);
   }
 
   get nodeValue(): string | null {
