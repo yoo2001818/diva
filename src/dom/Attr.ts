@@ -1,33 +1,43 @@
+import { Document } from './Document';
 import { Element } from './Element';
 import { Node } from './Node';
 
 export class Attr extends Node {
+  _name: string;
+  _value: string = '';
+  _ownerElement: Element | null = null;
+
+  constructor(document: Document | null, name: string) {
+    super(document);
+    this._name = name;
+  }
+
   get namespaceURI(): string | null {
-    throw new Error('Method not implemented.');
+    return null;
   }
 
   get prefix(): string | null {
-    throw new Error('Method not implemented.');
+    return null;
   }
 
   get localName(): string {
-    throw new Error('Method not implemented.');
+    return this._name;
   }
 
   get name(): string {
-    throw new Error('Method not implemented.');
+    return this._name;
   }
 
   get value(): string {
-    throw new Error('Method not implemented.');
+    return this._value;
   }
 
   set value(value: string) {
-    throw new Error('Method not implemented.');
+    this._value = value;
   }
 
   get ownerElement(): Element | null {
-    throw new Error('Method not implemented.');
+    return this._ownerElement;
   }
 
   get specified(): boolean {

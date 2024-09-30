@@ -10,7 +10,6 @@ export class CharacterData
   _data: string = '';
 
   get data(): string {
-    // LegacyNullToEmptyString behavior can be handled by TypeScript null-checking mechanisms.
     return this._data || '';
   }
 
@@ -23,23 +22,24 @@ export class CharacterData
   }
 
   substringData(offset: number, count: number): string {
-    throw new Error('Method not implemented.');
+    return this.data.slice(offset, offset + count);
   }
 
   appendData(data: string): void {
-    throw new Error('Method not implemented.');
+    this.data += data;
   }
 
   insertData(offset: number, data: string): void {
-    throw new Error('Method not implemented.');
+    this.data = this.data.slice(0, offset) + data + this.data.slice(offset);
   }
 
   deleteData(offset: number, count: number): void {
-    throw new Error('Method not implemented.');
+    this.data = this.data.slice(0, offset) + this.data.slice(offset + count);
   }
 
   replaceData(offset: number, count: number, data: string): void {
-    throw new Error('Method not implemented.');
+    this.data =
+      this.data.slice(0, offset) + data + this.data.slice(offset + count);
   }
 
   before(...nodes: (Node | string)[]): void {

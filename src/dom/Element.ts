@@ -3,6 +3,7 @@ import { ChildNode } from './ChildNode';
 import { Document } from './Document';
 import { DOMTokenList } from './DOMTokenList';
 import { HTMLCollection } from './HTMLCollection';
+import { NamedNodeMap } from './NamedNodeMap';
 import { Node } from './Node';
 import { NodeList } from './NodeList';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
@@ -12,10 +13,15 @@ export class Element
   extends Node
   implements ParentNode, ChildNode, NonDocumentTypeChildNode
 {
-  tagName: string;
+  _tagName: string;
+  _id: string = '';
+  _classList: DOMTokenList = new DOMTokenList();
+  _slot: string = '';
+  _attributes: NamedNodeMap = new NamedNodeMap(this);
+
   constructor(document: Document, tagName: string) {
     super(document);
-    this.tagName = tagName.toUpperCase();
+    this._tagName = tagName.toUpperCase();
   }
 
   get nodeType(): number {
@@ -23,75 +29,83 @@ export class Element
   }
 
   get nodeName(): string {
-    return this.tagName;
+    return this._tagName;
   }
 
   get nodeValue(): string | null {
     return null;
   }
 
+  get tagName(): string {
+    return this._tagName;
+  }
+
   get namespaceURI(): string | null {
-    throw new Error('Method not implemented.');
+    return null;
   }
 
   get prefix(): string | null {
-    throw new Error('Method not implemented.');
+    return null;
   }
 
   get localName(): string {
-    throw new Error('Method not implemented.');
+    return this._tagName;
   }
 
   get id(): string {
-    throw new Error('Method not implemented.');
+    return this._id;
   }
 
   set id(value: string) {
-    throw new Error('Method not implemented.');
+    this._id = value;
   }
 
   get className(): string {
-    throw new Error('Method not implemented.');
+    return this._classList.value;
   }
 
   set className(value: string) {
-    throw new Error('Method not implemented.');
+    this._classList.value = value;
   }
 
   get classList(): DOMTokenList {
-    throw new Error('Method not implemented.');
+    return this._classList;
   }
 
   get slot(): string {
-    throw new Error('Method not implemented.');
+    return this._slot;
   }
 
   set slot(value: string) {
-    throw new Error('Method not implemented.');
+    this._slot = value;
   }
 
   hasAttributes(): boolean {
-    throw new Error('Method not implemented.');
+    return this._attributes.length > 0;
   }
 
   get attributes(): NamedNodeMap {
-    throw new Error('Method not implemented.');
+    return this._attributes;
   }
 
   getAttributeNames(): string[] {
-    throw new Error('Method not implemented.');
+    return this._attributes._attributes.map((v) => v.name);
   }
 
   getAttribute(qualifiedName: string): string | null {
-    throw new Error('Method not implemented.');
+    const item = this._attributes.getNamedItem(qualifiedName);
+    return item != null ? item.value : null;
   }
 
   getAttributeNS(namespace: string | null, localName: string): string | null {
-    throw new Error('Method not implemented.');
+    const item = this._attributes.getNamedItemNS(namespace, localName);
+    return item != null ? item.value : null;
   }
 
   setAttribute(qualifiedName: string, value: string): void {
-    throw new Error('Method not implemented.');
+    const item = this._document!.createAttribute(qualifiedName);
+    item.value = value;
+    this._attributes.setNamedItem(item);
   }
 
   setAttributeNS(
@@ -99,47 +113,64 @@ export class Element
     qualifiedName: string,
     value: string,
   ): void {
-    throw new Error('Method not implemented.');
+    const item = this._document!.createAttributeNS(namespace, qualifiedName);
+    item.value = value;
+    this._attributes.setNamedItemNS(item);
   }
 
   removeAttribute(qualifiedName: string): void {
-    throw new Error('Method not implemented.');
+    this._attributes.removeNamedItem(qualifiedName);
   }
 
   removeAttributeNS(namespace: string | null, localName: string): void {
-    throw new Error('Method not implemented.');
+    this._attributes.removeNamedItemNS(namespace, localName);
   }
 
   toggleAttribute(qualifiedName: string, force?: boolean): boolean {
-    throw new Error('Method not implemented.');
+    if (this.hasAttribute(qualifiedName)) {
+      if (force !== true) {
+        this.removeAttribute(qualifiedName);
+        return false;
+      }
+      return true;
+    } else if (force !== false) {
+      this.setAttribute(qualifiedName, '');
+      return true;
+    }
+    return false;
   }
 
   hasAttribute(qualifiedName: string): boolean {
-    throw new Error('Method not implemented.');
+    const item = this.getAttribute(qualifiedName);
+    return item != null;
   }
 
   hasAttributeNS(namespace: string | null, localName: string): boolean {
-    throw new Error('Method not implemented.');
+    const item = this.getAttributeNS(namespace, localName);
+    return item != null;
   }
 
   getAttributeNode(qualifiedName: string): Attr | null {
-    throw new Error('Method not implemented.');
+    return this._attributes.getNamedItem(qualifiedName);
   }
 
   getAttributeNodeNS(namespace: string | null, localName: string): Attr | null {
-    throw new Error('Method not implemented.');
+    return this._attributes.getNamedItemNS(namespace, localName);
   }
 
   setAttributeNode(attr: Attr): Attr | null {
-    throw new Error('Method not implemented.');
+    return this._attributes.setNamedItem(attr);
   }
 
   setAttributeNodeNS(attr: Attr): Attr | null {
-    throw new Error('Method not implemented.');
+    return this._attributes.setNamedItemNS(attr);
   }
 
   removeAttributeNode(attr: Attr): Attr {
-    throw new Error('Method not implemented.');
+    if (attr._ownerElement !== this) {
+      throw new DOMException('', 'NotFoundError');
+    }
+    return this._attributes.removeNamedItem(attr.name);
   }
 
   attachShadow(init: ShadowRootInit): ShadowRoot {

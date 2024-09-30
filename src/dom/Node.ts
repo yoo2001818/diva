@@ -238,7 +238,8 @@ export class Node {
     }
     ensurePreInsertionValidity(this, node);
     const index = child._parentIndex!;
-    this.removeChild(child);
+    child._parent = null;
+    child._parentIndex = null;
     if (node._parent != null) {
       node._parent.removeChild(node);
     }

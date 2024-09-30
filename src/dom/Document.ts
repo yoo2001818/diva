@@ -1,3 +1,4 @@
+import { Attr } from './Attr';
 import { ChildNode } from './ChildNode';
 import { Element } from './Element';
 import { HTMLCollection } from './HTMLCollection';
