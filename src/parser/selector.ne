@@ -7,8 +7,8 @@ compound_selector_list -> compound_selector (_ "," _ complex_selector):*
 simple_selector_list -> simple_selector (_ "," _ simple_selector):*
 relative_selector_list -> relative_selector (_ "," _ relative_selector):*
 
-complex_selector -> compound_selector (combinator:? compound_selector):*
-relative_selector -> combinator:? complex_selector
+complex_selector -> compound_selector (_ combinator _ compound_selector):*
+relative_selector -> combinator:? _ complex_selector
 
 compound_selector ->
   type_selector subclass_selector:* (pseudo_element_selector pseudo_class_selector:*):* |
@@ -17,7 +17,7 @@ compound_selector ->
 
 simple_selector -> type_selector | subclass_selector
 
-combinator -> ">" | "+" | "~" | "||"
+combinator -> ">" | "+" | "~" | "||" | [\s]
 
 type_selector -> wq_name | ns_prefix:? "*"
 
@@ -45,20 +45,20 @@ function_token -> ident_token "("
 
 at_keyword_token -> "@" ident_token
 
-string_token -> "\"" ([^"\\\n] | escape | "\\\n"):* "\"" | "'" ([^'\\\n] | escape | "\\\n"):* "'"
+string_token -> "\"" ([^"\\\n] | escape | "\\\n"):* "\"" {% d => d[1].join('') %} | "'" ([^'\\\n] | escape | "\\\n"):* "'" {% d => d[1].join('') %}
 
 url_token -> "url(" _ ([^"'()\\\s] | escape):* _ ")"
 
 number_token -> ("+" | "-"):? (digit:* "." digit:+ | digit:+) ([eE] ("+" | "-"):? digit:+):?
 
-ident_token -> ("--" | "-":? char) char:*
+ident_token -> ("--" | "-":? char {% d => (d[0] || '') + d[1] %}) char:* {% d => d[0] + d[1].join('') %}
 
-hash_token -> "#" char:+
+hash_token -> "#" char:+ {% d => d[1].join('') %}
 
-char -> ([a-zA-Z0-9_-]|[^\x00-\x7F]) | escape
+char -> [a-zA-Z0-9_-] {% id %} | [^\x00-\x7F] {% id %} | escape {% id %}
 
-escape -> "\\" [^0-9a-fA-F\n] | "\\" hex_digit hex_digit:? hex_digit:? hex_digit:? hex_digit:? hex_digit:? _
+escape -> "\\" [^0-9a-fA-F\n] {% id %} | "\\" hex_digit hex_digit:? hex_digit:? hex_digit:? hex_digit:? hex_digit:? _ {% d => d.slice(1).join('') %}
 
-hex_digit -> [0-9a-fA-F]
+hex_digit -> [0-9a-fA-F] {% id %}
 
 digit -> [0-9]
