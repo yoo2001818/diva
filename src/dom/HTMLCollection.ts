@@ -12,8 +12,16 @@ export class HTMLCollectionImpl
   implements HTMLCollection
 {
   // TODO: This is not "live"
-  constructor(value: Array<Element>) {
-    super(...value);
+  _updater: () => Array<Element>;
+  constructor(updater: () => Array<Element>) {
+    super();
+    this._updater = updater;
+    this._update();
+  }
+  _update(): void {
+    const result = this._updater();
+    this.length = 0;
+    this.push(...result);
   }
   item(index: number): Element | null {
     return this[index] ?? null;

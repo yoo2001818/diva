@@ -1,8 +1,10 @@
 import { Document } from '../Document';
 import { Element } from '../Element';
+import { HTMLCollection, HTMLCollectionImpl } from '../HTMLCollection';
 import { Node } from '../Node';
-import { NodeList } from '../NodeList';
+import { NodeList, NodeListImpl } from '../NodeList';
 import { ensurePreInsertionValidity } from './node';
+import { traverseElements } from './traversal';
 
 export function elementPreviousElementSibling(node: Node): Element | null {
   const parent = node.parentElement;
@@ -131,11 +133,77 @@ export function elementRemove(node: Node): void {
 export function elementQuerySelector(
   node: Node,
   selectors: string,
-): Element | null {}
+): Element | null {
+  for (const item of traverseElements(node)) {
+    if (item.matches(selectors)) {
+      return item;
+    }
+  }
+  return null;
+}
 
 export function elementQuerySelectorAll(
   node: Node,
   selectors: string,
-): NodeList {}
+): NodeList {
+  const list = new NodeListImpl();
+  for (const item of traverseElements(node)) {
+    if (item.matches(selectors)) {
+      list.push(item);
+    }
+  }
+  return list;
+}
 
-export function elementGetElementById(elementId: string): Element | null {}
+export function elementGetElementById(
+  node: Node,
+  elementId: string,
+): Element | null {
+  for (const item of traverseElements(node)) {
+    if (item.id === elementId) {
+      return item;
+    }
+  }
+  return null;
+}
+
+export function elementGetElementsByTagName(
+  node: Node,
+  qualifiedName: string,
+): HTMLCollection {
+  const name = qualifiedName.toUpperCase();
+  return new HTMLCollectionImpl(() => {
+    const list: Element[] = [];
+    for (const item of traverseElements(node)) {
+      if (item.tagName === name) {
+        list.push(item);
+      }
+    }
+    return list;
+  });
+}
+
+export function elementGetElementsByTagNameNS(
+  node: Node,
+  _namespace: string | null,
+  localName: string,
+): HTMLCollection {
+  return elementGetElementsByTagName(node, localName);
+}
+
+export function elementGetElementsByClassName(
+  node: Node,
+  classNames: string,
+): HTMLCollection {
+  const classList = classNames.split(/\s+/).filter(Boolean);
+  return new HTMLCollectionImpl(() => {
+    const list: Element[] = [];
+    for (const item of traverseElements(node)) {
+      const containsAll = classList.every((v) => item.classList.contains(v));
+      if (containsAll) {
+        list.push(item);
+      }
+    }
+    return list;
+  });
+}

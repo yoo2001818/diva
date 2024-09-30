@@ -15,6 +15,9 @@ import {
   elementAppend,
   elementBefore,
   elementGetElementById,
+  elementGetElementsByClassName,
+  elementGetElementsByTagName,
+  elementGetElementsByTagNameNS,
   elementPrepend,
   elementQuerySelector,
   elementQuerySelectorAll,
@@ -84,18 +87,18 @@ export class Document
   }
 
   getElementsByTagName(qualifiedName: string): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return elementGetElementsByTagName(this, qualifiedName);
   }
 
   getElementsByTagNameNS(
     namespace: string | null,
     localName: string,
   ): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return elementGetElementsByTagNameNS(this, namespace, localName);
   }
 
   getElementsByClassName(classNames: string): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return elementGetElementsByClassName(this, classNames);
   }
 
   createElement(
@@ -177,7 +180,7 @@ export class Document
   }
 
   get children(): HTMLCollection {
-    return new HTMLCollectionImpl(
+    return new HTMLCollectionImpl(() =>
       this._childNodes.filter(
         (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
       ),
@@ -235,6 +238,6 @@ export class Document
   }
 
   getElementById(elementId: string): Element | null {
-    return elementGetElementById(elementId);
+    return elementGetElementById(this, elementId);
   }
 }

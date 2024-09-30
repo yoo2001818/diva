@@ -34,7 +34,7 @@ export class DocumentFragment
   }
 
   get children(): HTMLCollection {
-    return new HTMLCollectionImpl(
+    return new HTMLCollectionImpl(() =>
       this._childNodes.filter(
         (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
       ),
@@ -76,6 +76,6 @@ export class DocumentFragment
   }
 
   getElementById(elementId: string): Element | null {
-    return elementGetElementById(elementId);
+    return elementGetElementById(this, elementId);
   }
 }

@@ -12,6 +12,9 @@ import {
   elementAfter,
   elementAppend,
   elementBefore,
+  elementGetElementsByClassName,
+  elementGetElementsByTagName,
+  elementGetElementsByTagNameNS,
   elementNextElementSibling,
   elementPrepend,
   elementPreviousElementSibling,
@@ -195,7 +198,14 @@ export class Element
   }
 
   closest(selectors: string): Element | null {
-    throw new Error('Method not implemented.');
+    let parent = this.parentElement;
+    while (parent != null) {
+      if (parent.matches(selectors)) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
   }
 
   matches(selectors: string): boolean {
@@ -203,22 +213,22 @@ export class Element
   }
 
   webkitMatchesSelector(selectors: string): boolean {
-    throw new Error('Method not implemented.');
+    return this.matches(selectors);
   }
 
   getElementsByTagName(qualifiedName: string): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return elementGetElementsByTagName(this, qualifiedName);
   }
 
   getElementsByTagNameNS(
     namespace: string | null,
     localName: string,
   ): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return elementGetElementsByTagNameNS(this, namespace, localName);
   }
 
   getElementsByClassName(classNames: string): HTMLCollection {
-    throw new Error('Method not implemented.');
+    return elementGetElementsByClassName(this, classNames);
   }
 
   insertAdjacentElement(where: string, element: Element): Element | null {
@@ -246,7 +256,7 @@ export class Element
   }
 
   get children(): HTMLCollection {
-    return new HTMLCollectionImpl(
+    return new HTMLCollectionImpl(() =>
       this._childNodes.filter(
         (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
       ),
