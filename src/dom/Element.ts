@@ -178,7 +178,7 @@ export class Element
   }
 
   get shadowRoot(): ShadowRoot | null {
-    throw new Error('Method not implemented.');
+    return null;
   }
 
   closest(selectors: string): Element | null {
@@ -281,7 +281,7 @@ export class Element
   }
 
   remove(): void {
-    throw new Error('Method not implemented.');
+    this._parent?.removeChild(this);
   }
 
   get previousElementSibling(): Element | null {
@@ -308,10 +308,32 @@ export class Element
   }
 
   _cloneNodeSelf(): Node {
-    throw new Error('Method not implemented.');
+    const elem = this._document!.createElement(this._tagName);
+    elem.id = this.id;
+    elem.slot = this.slot;
+    elem.className = this.className;
+    for (let i = 0; i < this._attributes.length; i += 1) {
+      const attr = this._attributes.item(i)!;
+      elem.setAttribute(attr.name, attr.value);
+    }
+    return elem;
   }
 
   _isEqualNodeSelf(otherNode: Node | null): boolean {
-    throw new Error('Method not implemented.');
+    const other = otherNode as Element;
+    if (
+      other.id !== this.id ||
+      other.slot !== this.slot ||
+      other.className !== this.className
+    ) {
+      return false;
+    }
+    for (let i = 0; i < this._attributes.length; i += 1) {
+      const attr = this._attributes.item(i)!;
+      if (other.getAttribute(attr.name) !== attr.value) {
+        return false;
+      }
+    }
+    return true;
   }
 }
