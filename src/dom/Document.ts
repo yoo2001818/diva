@@ -2,16 +2,19 @@ import { Attr } from './Attr';
 import { CDATASection } from './CDATASection';
 import { ChildNode } from './ChildNode';
 import { Comment } from './Comment';
+import { DocumentFragment } from './DocumentFragment';
 import { Element } from './Element';
 import { HTMLCollection, HTMLCollectionImpl } from './HTMLCollection';
 import { Node } from './Node';
 import { NodeList } from './NodeList';
+import { NonElementParentNode } from './NonElementParentNode';
 import { ParentNode } from './ParentNode';
 import { Text } from './Text';
 import {
   elementAfter,
   elementAppend,
   elementBefore,
+  elementGetElementById,
   elementPrepend,
   elementQuerySelector,
   elementQuerySelectorAll,
@@ -19,7 +22,10 @@ import {
   elementReplaceWith,
 } from './utils/element';
 
-export class Document extends Node implements ParentNode, ChildNode {
+export class Document
+  extends Node
+  implements ParentNode, ChildNode, NonElementParentNode
+{
   constructor() {
     super(null);
     this._document = this;
@@ -108,7 +114,7 @@ export class Document extends Node implements ParentNode, ChildNode {
   }
 
   createDocumentFragment(): DocumentFragment {
-    throw new Error('Method not implemented.');
+    return new DocumentFragment(this);
   }
 
   createTextNode(data: string): Text {
@@ -226,5 +232,9 @@ export class Document extends Node implements ParentNode, ChildNode {
 
   remove(): void {
     // Noop
+  }
+
+  getElementById(elementId: string): Element | null {
+    return elementGetElementById(elementId);
   }
 }

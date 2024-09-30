@@ -215,13 +215,20 @@ export class Node {
       index = child._parentIndex!;
     }
     ensurePreInsertionValidity(this, node);
-    if (node._parent != null) {
-      node._parent.removeChild(node);
+    let nodes = [node];
+    if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+      nodes = node._childNodes;
     }
-    node._parent = this;
-    node._parentIndex = index;
-    this._childNodes.splice(index, 0, node);
-    for (let i = index + 1; i < this._childNodes.length; i += 1) {
+    for (let i = 0; i < nodes.length; i += 1) {
+      const item = nodes[i];
+      if (item._parent != null) {
+        item._parent.removeChild(item);
+      }
+      item._parent = this;
+      item._parentIndex = index + i;
+      this._childNodes.splice(index + i, 0, item);
+    }
+    for (let i = index + nodes.length; i < this._childNodes.length; i += 1) {
       const node = this._childNodes[i];
       node._parentIndex = i;
     }
@@ -240,12 +247,36 @@ export class Node {
     const index = child._parentIndex!;
     child._parent = null;
     child._parentIndex = null;
-    if (node._parent != null) {
-      node._parent.removeChild(node);
+    let nodes = [node];
+    if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+      nodes = node._childNodes;
     }
-    node._parent = this;
-    node._parentIndex = index;
-    this._childNodes[index] = node;
+    if (nodes.length === 0) {
+      this._childNodes.splice(index, 1);
+    }
+    for (let i = 0; i < nodes.length; i += 1) {
+      const item = nodes[i];
+      if (item._parent != null) {
+        item._parent.removeChild(node);
+      }
+      item._parent = this;
+      item._parentIndex = index + i;
+      if (i === 0) {
+        this._childNodes[index] = item;
+      } else {
+        this._childNodes.splice(index + i, 0, item);
+      }
+    }
+    if (nodes.length >= 2) {
+      for (
+        let i = index + nodes.length - 1;
+        i < this._childNodes.length;
+        i += 1
+      ) {
+        const node = this._childNodes[i];
+        node._parentIndex = i;
+      }
+    }
     return child;
   }
 

@@ -61,3 +61,5 @@ export function elementQuerySelectorAll(
   node: Node,
   selectors: string,
 ): NodeList {}
+
+export function elementGetElementById(elementId: string): Element | null {}
