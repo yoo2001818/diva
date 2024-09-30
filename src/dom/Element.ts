@@ -1,5 +1,6 @@
 import { Attr } from './Attr';
 import { ChildNode } from './ChildNode';
+import { Comment } from './Comment';
 import { Document } from './Document';
 import { DOMTokenList } from './DOMTokenList';
 import { HTMLCollection, HTMLCollectionImpl } from './HTMLCollection';
@@ -8,6 +9,7 @@ import { Node } from './Node';
 import { NodeList } from './NodeList';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
 import { ParentNode } from './ParentNode';
+import { Text } from './Text';
 import {
   elementAfter,
   elementAppend,
@@ -24,6 +26,7 @@ import {
   elementReplaceChildren,
   elementReplaceWith,
 } from './utils/element';
+import { htmlEscapeString, htmlIsVoid } from './utils/serialize';
 
 export class Element
   extends Node
@@ -240,7 +243,33 @@ export class Element
   }
 
   get innerHTML(): string {
-    throw new Error('Method not implemented.');
+    if (htmlIsVoid(this.tagName)) {
+      return '';
+    }
+    let s = '';
+    for (let i = 0; i < this._childNodes.length; i += 1) {
+      const node = this._childNodes[i];
+      switch (node.nodeType) {
+        case Node.ELEMENT_NODE: {
+          const elem = node as Element;
+          s += elem.outerHTML;
+          break;
+        }
+        case Node.TEXT_NODE: {
+          const text = node as Text;
+          s += htmlEscapeString(text.data);
+          break;
+        }
+        case Node.COMMENT_NODE: {
+          const comment = node as Comment;
+          s += '<!--';
+          s += comment.data;
+          s += '-->';
+          break;
+        }
+      }
+    }
+    return s;
   }
 
   set innerHTML(value: string) {
@@ -248,7 +277,24 @@ export class Element
   }
 
   get outerHTML(): string {
-    throw new Error('Method not implemented.');
+    let s = '';
+    s += '<';
+    s += this.tagName.toLowerCase();
+    this._attributes._attributes.forEach((attr) => {
+      s += ' ';
+      s += attr.name;
+      s += '="';
+      s += htmlEscapeString(attr.value, true);
+      s += '"';
+    });
+    s += '>';
+    if (!htmlIsVoid(this.tagName)) {
+      s += this.innerHTML;
+      s += '</';
+      s += this.tagName.toLowerCase();
+      s += '>';
+    }
+    return s;
   }
 
   set outerHTML(value: string) {
