@@ -267,7 +267,7 @@ export class Node {
         this._childNodes.splice(index + i, 0, item);
       }
     }
-    if (nodes.length >= 2) {
+    if (nodes.length !== 1) {
       for (
         let i = index + nodes.length - 1;
         i < this._childNodes.length;
