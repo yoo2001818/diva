@@ -13,6 +13,7 @@
     "test": "vitest"
   },
   "devDependencies": {
+    "@types/nearley": "^2.11.5",
     "nearley": "^2.20.1",
     "prettier": "3.3.3",
     "typescript": "^5.5.3",
