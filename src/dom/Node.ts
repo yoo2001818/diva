@@ -217,7 +217,7 @@ export class Node {
     ensurePreInsertionValidity(this, node);
     let nodes = [node];
     if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-      nodes = node._childNodes;
+      nodes = [...node._childNodes];
     }
     for (let i = 0; i < nodes.length; i += 1) {
       const item = nodes[i];

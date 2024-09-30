@@ -26,7 +26,7 @@ import {
   elementReplaceChildren,
   elementReplaceWith,
 } from './utils/element';
-import { htmlEscapeString, htmlIsVoid } from './utils/serialize';
+import { htmlEscapeString, htmlIsVoid } from './utils/html';
 
 export class Element
   extends Node

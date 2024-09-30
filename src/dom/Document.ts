@@ -32,6 +32,7 @@ export class Document
   constructor() {
     super(null);
     this._document = this;
+    this.appendChild(this.createElement('html'));
   }
 
   get nodeType(): number {

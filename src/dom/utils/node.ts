@@ -1,10 +1,9 @@
-import { CharacterData } from '../CharacterData';
 import { Node } from '../Node';
 
 export function ensurePreInsertionValidity(parent: Node, node: Node): void {
   if (
-    parent.nodeType !== Node.DOCUMENT_NODE ||
-    parent.nodeType !== Node.DOCUMENT_FRAGMENT_NODE ||
+    parent.nodeType !== Node.DOCUMENT_NODE &&
+    parent.nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
     parent.nodeType !== Node.ELEMENT_NODE
   ) {
     throw new DOMException(
@@ -16,10 +15,12 @@ export function ensurePreInsertionValidity(parent: Node, node: Node): void {
     throw new DOMException('Node contains parents', 'HierarchyRequestError');
   }
   if (
-    node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE ||
-    node.nodeType !== Node.DOCUMENT_TYPE_NODE ||
-    node.nodeType !== Node.ELEMENT_NODE ||
-    !(node instanceof CharacterData)
+    node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
+    node.nodeType !== Node.DOCUMENT_TYPE_NODE &&
+    node.nodeType !== Node.ELEMENT_NODE &&
+    node.nodeType !== Node.TEXT_NODE &&
+    node.nodeType !== Node.COMMENT_NODE &&
+    node.nodeType !== Node.CDATA_SECTION_NODE
   ) {
     throw new DOMException(
       'Node cannot have a parent',
