@@ -1,3 +1,4 @@
+import { parseHtml } from '../parser/html';
 import { ComplexSelector, parseSelectors } from '../parser/selector';
 import { Attr } from './Attr';
 import { ChildNode } from './ChildNode';
@@ -32,7 +33,8 @@ import { matchSelector } from './utils/selector';
 
 export class Element
   extends Node
-  implements ParentNode, ChildNode, NonDocumentTypeChildNode {
+  implements ParentNode, ChildNode, NonDocumentTypeChildNode
+{
   _tagName: string;
   _id: string = '';
   _classList: DOMTokenList = new DOMTokenList();
@@ -280,7 +282,10 @@ export class Element
   }
 
   set innerHTML(value: string) {
-    throw new Error('Method not implemented.');
+    while (this.lastChild != null) {
+      this.removeChild(this.lastChild);
+    }
+    parseHtml(value, this.ownerDocument!, this);
   }
 
   get outerHTML(): string {
@@ -305,7 +310,9 @@ export class Element
   }
 
   set outerHTML(value: string) {
-    throw new Error('Method not implemented.');
+    const frag = this.ownerDocument!.createDocumentFragment();
+    parseHtml(value, this.ownerDocument!, frag);
+    this.replaceWith(frag);
   }
 
   get children(): HTMLCollection {

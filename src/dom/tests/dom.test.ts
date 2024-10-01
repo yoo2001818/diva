@@ -11,3 +11,11 @@ test('Handles basic node insertion', () => {
   html.appendChild(h1);
   expect(html.innerHTML).toBe('<h1>Hello, <strong>world!</strong></h1>');
 });
+
+test('Handles innerHTML correctly', () => {
+  const text = '<h1 title="what">Hello, <strong>world!</strong></h1>';
+  const doc = new Document();
+  const html = doc.documentElement!;
+  html.innerHTML = text;
+  expect(html.innerHTML).toBe(text);
+});
