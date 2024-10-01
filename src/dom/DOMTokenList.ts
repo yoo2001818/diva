@@ -32,7 +32,7 @@ export class DOMTokenList {
   add(...tokens: string[]): void {
     tokens.forEach((token) => this._validateToken(token));
     tokens.forEach((token) => {
-      if (!tokens.includes(token)) {
+      if (!this._tokens.includes(token)) {
         this._tokens.push(token);
       }
     });

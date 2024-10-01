@@ -1,3 +1,4 @@
+import { parseSelectors } from '../../parser/selector';
 import { Document } from '../Document';
 import { Element } from '../Element';
 import { HTMLCollection, HTMLCollectionImpl } from '../HTMLCollection';
@@ -134,8 +135,9 @@ export function elementQuerySelector(
   node: Node,
   selectors: string,
 ): Element | null {
+  const selector = parseSelectors(selectors);
   for (const item of traverseElements(node)) {
-    if (item.matches(selectors)) {
+    if (item._matches(selector)) {
       return item;
     }
   }
@@ -146,9 +148,10 @@ export function elementQuerySelectorAll(
   node: Node,
   selectors: string,
 ): NodeList {
+  const selector = parseSelectors(selectors);
   const list = new NodeListImpl();
   for (const item of traverseElements(node)) {
-    if (item.matches(selectors)) {
+    if (item._matches(selector)) {
       list.push(item);
     }
   }

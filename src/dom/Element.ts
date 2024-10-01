@@ -1,3 +1,4 @@
+import { ComplexSelector, parseSelectors } from '../parser/selector';
 import { Attr } from './Attr';
 import { ChildNode } from './ChildNode';
 import { Comment } from './Comment';
@@ -27,11 +28,11 @@ import {
   elementReplaceWith,
 } from './utils/element';
 import { htmlEscapeString, htmlIsVoid } from './utils/html';
+import { matchSelector } from './utils/selector';
 
 export class Element
   extends Node
-  implements ParentNode, ChildNode, NonDocumentTypeChildNode
-{
+  implements ParentNode, ChildNode, NonDocumentTypeChildNode {
   _tagName: string;
   _id: string = '';
   _classList: DOMTokenList = new DOMTokenList();
@@ -201,9 +202,10 @@ export class Element
   }
 
   closest(selectors: string): Element | null {
+    const selector = parseSelectors(selectors);
     let parent = this.parentElement;
     while (parent != null) {
-      if (parent.matches(selectors)) {
+      if (parent._matches(selector)) {
         return parent;
       }
       parent = parent.parentElement;
@@ -211,8 +213,13 @@ export class Element
     return null;
   }
 
+  _matches(selector: ComplexSelector[]): boolean {
+    return matchSelector(this, selector);
+  }
+
   matches(selectors: string): boolean {
-    throw new Error('Method not implemented.');
+    const selector = parseSelectors(selectors);
+    return matchSelector(this, selector);
   }
 
   webkitMatchesSelector(selectors: string): boolean {

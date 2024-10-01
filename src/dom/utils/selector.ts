@@ -64,7 +64,7 @@ function getCombinatorCandidates(element: Element, combinator: Combinator): Elem
       let current = element.parentElement;
       while (current != null) {
         parents.push(current);
-        current = element.parentElement;
+        current = current.parentElement;
       }
       return parents;
     }
@@ -81,7 +81,7 @@ function getCombinatorCandidates(element: Element, combinator: Combinator): Elem
       let current = element.previousElementSibling;
       while (current != null) {
         siblings.push(current);
-        current = element.previousElementSibling;
+        current = current.previousElementSibling;
       }
       return siblings;
     }
