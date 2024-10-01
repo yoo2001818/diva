@@ -17,16 +17,19 @@ export function parseSelectors(input: string) {
 
 export interface ComplexSelector {
   type: 'complexSelector';
-  children: CompoundSelector[];
+  children: ComplexSelectorChild[];
 }
+
+export type ComplexSelectorChild =
+  | Combinator
+  | CompoundSelector;
 
 export interface CompoundSelector {
   type: 'compoundSelector';
-  children: CompoundSelectorChild[];
+  children: SimpleSelector[];
 }
 
-export type CompoundSelectorChild =
-  | Combinator
+export type SimpleSelector =
   | TypeSelector
   | IdSelector
   | ClassSelector

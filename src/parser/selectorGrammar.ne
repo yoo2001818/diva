@@ -61,7 +61,7 @@ attribute_selector ->
   "[" wq_name "]" {% d => ({ type: 'attributeSelector', name: d[1] }) %} |
   "[" wq_name attr_matcher string_or_ident (__ attr_modifier {% d => d[1] %}):? "]" {% d => ({ type: 'attributeSelector', name: d[1], matcher: d[2], value: d[3], modifier: d[4] }) %}
 attr_matcher -> ( "~" | "|" | "^" | "$" | "*" ):? "=" {% join %}
-attr_modifier -> "i" {% id %} | "s" {% id %}
+attr_modifier -> [iI] {% () => 'i' %} | [sS] {% () => 's' %}
 
 string_or_ident -> string_token {% id %} | ident_token {% id %}
 
