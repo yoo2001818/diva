@@ -13,7 +13,9 @@
     "test": "vitest"
   },
   "devDependencies": {
+    "@types/deep-equal": "^1.0.4",
     "@types/nearley": "^2.11.5",
+    "deep-equal": "^2.2.3",
     "htmlparser2": "^9.1.0",
     "nearley": "^2.20.1",
     "prettier": "3.3.3",
