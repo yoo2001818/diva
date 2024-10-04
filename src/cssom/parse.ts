@@ -22,6 +22,10 @@ export class Parser {
     return result;
   }
 
+  isEnd(): boolean {
+    return this._offset === this._input.length;
+  }
+
   integer(): number | null {
     const result = this.match(/[+\-]?[0-9]+/y);
     if (result == null) return null;
@@ -176,4 +180,16 @@ export class Parser {
   margin() {
     return this.sideShorthand(() => this.marginEntry());
   }
+}
+
+export function parse<T>(input: string, func: (v: Parser) => T): T | null {
+  const parser = new Parser();
+  parser.reset(input);
+  const result = func(parser);
+  parser.ws();
+  if (!parser.isEnd()) {
+    // If it isn't finished, it has failed
+    return null;
+  }
+  return result;
 }

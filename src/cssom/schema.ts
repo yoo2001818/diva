@@ -1,5 +1,5 @@
-import { CSSPadding, CSSStyleDict } from './dict';
-import { Parser } from './parse';
+import { CSSStyleDict } from './dict';
+import { parse, Parser } from './parse';
 import { stringifyMargin, stringifySideShorthand } from './stringify';
 
 export interface CSSSchemaEntry {
@@ -7,53 +7,74 @@ export interface CSSSchemaEntry {
   set(dict: CSSStyleDict, value: string): void;
 }
 
-type KeysMatching<T, V> = {
-  [K in keyof T]-?: T[K] extends V ? K : never;
-}[keyof T];
-
-const paddingEntry = (
-  key: KeysMatching<CSSStyleDict, CSSPadding>,
-): CSSSchemaEntry => ({
-  get(dict) {
-    return stringifyMargin(dict[key]);
-  },
-  set(dict, value) {
-    const parser = new Parser();
-    parser.reset(value);
-    const val = parser.paddingEntry();
-    if (val != null) {
-      dict[key] = val;
-    }
-  },
-});
-
-export const schema = {
-  paddingTop: paddingEntry('paddingTop'),
-  paddingRight: paddingEntry('paddingRight'),
-  paddingBottom: paddingEntry('paddingBottom'),
-  paddingLeft: paddingEntry('paddingLeft'),
-  padding: {
+function entry<K extends keyof CSSStyleDict>(
+  key: K,
+  get: (v: CSSStyleDict[K]) => string,
+  parseFunc: (v: Parser) => CSSStyleDict[K] | null,
+): CSSSchemaEntry {
+  return {
     get(dict) {
-      return stringifySideShorthand(
-        [
-          dict.paddingTop,
-          dict.paddingRight,
-          dict.paddingBottom,
-          dict.paddingLeft,
-        ],
-        stringifyMargin,
-      );
+      return get(dict[key]);
     },
-    set(dict, value) {
-      const parser = new Parser();
-      parser.reset(value);
-      const val = parser.padding();
-      if (val != null) {
-        dict.paddingTop = val[0];
-        dict.paddingRight = val[1];
-        dict.paddingBottom = val[2];
-        dict.paddingLeft = val[3];
+    set(dict, input) {
+      const value = parse(input, parseFunc);
+      if (value != null) {
+        dict[key] = value;
       }
     },
-  },
+  };
+}
+
+function sideShorthand<K extends keyof CSSStyleDict>(
+  keys: [K, K, K, K],
+  get: (v: CSSStyleDict[K]) => string,
+  parseFunc: (v: Parser) => CSSStyleDict[K] | null,
+): CSSSchemaEntry {
+  return {
+    get(dict) {
+      return stringifySideShorthand(
+        [dict[keys[0]], dict[keys[1]], dict[keys[2]], dict[keys[3]]],
+        get,
+      );
+    },
+    set(dict, input) {
+      const value = parse(input, (v) => v.sideShorthand(() => parseFunc(v)));
+      if (value != null) {
+        dict[keys[0]] = value[0];
+        dict[keys[1]] = value[1];
+        dict[keys[2]] = value[2];
+        dict[keys[3]] = value[3];
+      }
+    },
+  };
+}
+
+function sideShorthandSet<K extends keyof CSSStyleDict, K2 extends string>(
+  name: K2,
+  keys: [K, K, K, K],
+  get: (v: CSSStyleDict[K]) => string,
+  parseFunc: (v: Parser) => CSSStyleDict[K] | null,
+): Record<K | K2, CSSSchemaEntry> {
+  return {
+    [keys[0]]: entry(keys[0], get, parseFunc),
+    [keys[1]]: entry(keys[1], get, parseFunc),
+    [keys[2]]: entry(keys[2], get, parseFunc),
+    [keys[3]]: entry(keys[3], get, parseFunc),
+    [name]: sideShorthand(keys, get, parseFunc),
+  } as Record<K | K2, CSSSchemaEntry>;
+}
+
+export const schema = {
+  ...sideShorthandSet(
+    'padding',
+    ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
+    stringifyMargin,
+    (v) => v.paddingEntry(),
+  ),
+  ...sideShorthandSet(
+    'margin',
+    ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
+    stringifyMargin,
+    (v) => v.marginEntry(),
+  ),
 } satisfies Record<string, CSSSchemaEntry>;
