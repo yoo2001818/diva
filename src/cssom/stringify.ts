@@ -2,7 +2,7 @@ import equal from 'deep-equal';
 import { CSSKeyword, CSSLength, CSSMargin, CSSPercentage } from './dict';
 
 export function stringifyLength(value: CSSLength): string {
-  return String(value.value) + value.unit ?? '';
+  return String(value.value) + (value.unit ?? '');
 }
 
 export function stringifyPercentage(value: CSSPercentage): string {

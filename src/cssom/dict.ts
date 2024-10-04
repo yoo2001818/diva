@@ -45,3 +45,20 @@ export interface CSSStyleDict {
     | CSSKeyword<'none'>
     | CSSKeyword<'inherit'>;
 }
+
+export const INITIAL_VALUES: CSSStyleDict = {
+  paddingTop: { type: 'length', value: 0 },
+  paddingRight: { type: 'length', value: 0 },
+  paddingBottom: { type: 'length', value: 0 },
+  paddingLeft: { type: 'length', value: 0 },
+  marginTop: { type: 'length', value: 0 },
+  marginRight: { type: 'length', value: 0 },
+  marginBottom: { type: 'length', value: 0 },
+  marginLeft: { type: 'length', value: 0 },
+  width: { type: 'auto' },
+  height: { type: 'auto' },
+  minWidth: { type: 'length', value: 0 },
+  minHeight: { type: 'length', value: 0 },
+  maxWidth: { type: 'none' },
+  maxHeight: { type: 'none' },
+};

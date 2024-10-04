@@ -121,7 +121,7 @@ export class Parser {
     for (let i = 0; i < max; i += 1) {
       const result = item();
       if (result == null) {
-        this.undo(this._offset);
+        this.undo(prev);
         return output;
       }
       prev = this._offset;
@@ -131,9 +131,9 @@ export class Parser {
     return output;
   }
 
-  sideShorthand<U extends () => any>(
+  sideShorthand<U extends () => any, T = NonNullable<ReturnType<U>>>(
     item: U,
-  ): [ReturnType<U>, ReturnType<U>, ReturnType<U>, ReturnType<U>] | null {
+  ): [T, T, T, T] | null {
     const items = this.array(item, 4);
     // top right bottom left
     switch (items.length) {
