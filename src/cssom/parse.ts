@@ -1,9 +1,12 @@
 import {
   CSSColor,
+  CSSHash,
+  CSSIndentifier,
   CSSKeyword,
   CSSLength,
   CSSNumber,
   CSSPercentage,
+  CSSRgb,
   CSSUrl,
 } from './dict';
 
@@ -46,7 +49,13 @@ export class Parser {
   }
 
   cssNumber(): CSSNumber | null {
-    return null;
+    const prev = this._offset;
+    const value = this.number();
+    if (value == null) {
+      this.undo(prev);
+      return null;
+    }
+    return { type: 'number', value };
   }
 
   length(): CSSLength | null {
@@ -146,6 +155,27 @@ export class Parser {
     return output;
   }
 
+  any<T extends Record<string, () => any>>(
+    items: T,
+  ): { [K in keyof T]: ReturnType<T[K]> | null } {
+    const output: Record<string, any> = {};
+    while (true) {
+      const remaining = Object.keys(items).filter((key) => output[key] == null);
+      if (remaining.length === 0) break;
+      let caught = false;
+      for (let i = 0; i < remaining.length; i += 1) {
+        const key = remaining[i];
+        const result = items[key]();
+        if (result != null) {
+          caught = true;
+          output[key] = result;
+        }
+      }
+      if (!caught) break;
+    }
+    return output as any;
+  }
+
   sideShorthand<U extends () => any, T = NonNullable<ReturnType<U>>>(
     item: U,
   ): [T, T, T, T] | null {
@@ -185,11 +215,93 @@ export class Parser {
   }
 
   url(): CSSUrl | null {
-    return null;
+    const result = this.match(/url\(([^\)]+)\)/y);
+    if (result == null) {
+      return null;
+    }
+    return { type: 'url', value: result[1] };
+  }
+
+  hash(): CSSHash | null {
+    const result = this.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})/y);
+    if (result == null) {
+      return null;
+    }
+    return { type: 'hash', value: result[1] };
+  }
+
+  identifier(): CSSIndentifier | null {
+    const result = this.match(/[a-zA-Z0-9-]+/y);
+    if (result == null) {
+      return null;
+    }
+    return { type: 'identifier', value: result[0] };
+  }
+
+  rgb(): CSSRgb | null {
+    const result = this.match(
+      /rgb\(([0-9]+)(?:,|\s+)([0-9]+)(?:,|\s+)([0-9]+)\)/y,
+    );
+    if (result == null) {
+      return null;
+    }
+    return {
+      type: 'rgb',
+      args: [
+        parseFloat(result[1]),
+        parseFloat(result[2]),
+        parseFloat(result[3]),
+      ],
+    };
   }
 
   color(): CSSColor | null {
-    return null;
+    return this.oneOf(
+      () => this.hash(),
+      () => this.rgb(),
+      () => this.identifier(),
+    );
+  }
+
+  backgroundPosition():
+    | [
+        CSSLength | CSSPercentage | CSSKeyword<'left' | 'center' | 'right'>,
+        CSSLength | CSSPercentage | CSSKeyword<'top' | 'center' | 'bottom'>,
+      ]
+    | null {
+    const prev = this._offset;
+    const items = this.oneOf(
+      () =>
+        this.series(
+          () =>
+            this.oneOf(
+              () => this.length(),
+              () => this.percentage(),
+              () => this.keyword('left', 'center', 'right'),
+            ),
+          () =>
+            this.oneOf(
+              () => this.length(),
+              () => this.percentage(),
+              () => this.keyword('top', 'center', 'bottom'),
+            ),
+        ),
+      () => this.length(),
+      () => this.percentage(),
+      () => this.keyword('left', 'center', 'right'),
+      () => this.keyword('top', 'center', 'bottom'),
+    );
+    if (items == null) {
+      this.undo(prev);
+      return null;
+    }
+    if (Array.isArray(items)) {
+      return [items[0]!, items[1]!];
+    } else if (items.type === 'top' || items.type === 'bottom') {
+      return [{ type: 'center' }, items];
+    } else {
+      return [items as any, { type: 'center' }];
+    }
   }
 }
 

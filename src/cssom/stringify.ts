@@ -1,10 +1,13 @@
 import equal from 'deep-equal';
 import {
   CSSColor,
+  CSSHash,
+  CSSIndentifier,
   CSSKeyword,
   CSSLength,
   CSSNumber,
   CSSPercentage,
+  CSSRgb,
   CSSUrl,
 } from './dict';
 
@@ -54,20 +57,45 @@ export function stringifySideShorthand<T>(
   }
 }
 
+export function stringifyIdentifier(value: CSSIndentifier): string {
+  return value.value;
+}
+
 export function stringifyColor<T extends string>(
   value: CSSColor | CSSKeyword<T>,
 ): string {
-  return String(value.type);
+  switch (value.type) {
+    case 'hash':
+      return `#${(value as CSSHash).value}`;
+    case 'indentifier':
+      return stringifyIdentifier(value as CSSIndentifier);
+    case 'rgb': {
+      const rgb = value as CSSRgb;
+      return `rgb(${rgb.args[0]}, ${rgb.args[1]}, ${rgb.args[2]})`;
+    }
+    default:
+      return stringifyKeyword(value as CSSKeyword<any>);
+  }
 }
 
 export function stringifyUrl<T extends string>(
   value: CSSUrl | CSSKeyword<T>,
 ): string {
-  return String(value.type);
+  switch (value.type) {
+    case 'url':
+      return `url(${(value as CSSUrl).value})`;
+    default:
+      return stringifyKeyword(value as CSSKeyword<any>);
+  }
 }
 
 export function stringifyNumber<T extends string>(
   value: CSSNumber | CSSKeyword<T>,
 ): string {
-  return String(value.type);
+  switch (value.type) {
+    case 'number':
+      return String((value as CSSNumber).value);
+    default:
+      return stringifyKeyword(value as CSSKeyword<any>);
+  }
 }

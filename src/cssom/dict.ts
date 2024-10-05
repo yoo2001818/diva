@@ -12,7 +12,7 @@ export interface CSSHash {
   value: string;
 }
 export interface CSSIndentifier {
-  type: 'indentifier';
+  type: 'identifier';
   value: string;
 }
 export interface CSSString {
@@ -103,8 +103,8 @@ export type CSSVerticalAlign =
 function keyword<T extends string>(type: T): CSSKeyword<T> {
   return { type };
 }
-function indentifier(value: string): CSSIndentifier {
-  return { type: 'indentifier', value };
+function identifier(value: string): CSSIndentifier {
+  return { type: 'identifier', value };
 }
 const length0: CSSLength = { type: 'length', value: 0 };
 const colorDefault: CSSColor = { type: 'hash', value: '000000' };
@@ -209,7 +209,7 @@ export interface CSSStyleDict {
 
 export const INITIAL_VALUES: CSSStyleDict = {
   backgroundAttachment: keyword('scroll'),
-  backgroundColor: indentifier('transparent'),
+  backgroundColor: identifier('transparent'),
   backgroundImage: keyword('none'),
   backgroundPositionX: { type: 'percentage', value: 0 },
   backgroundPositionY: { type: 'percentage', value: 0 },
@@ -236,7 +236,7 @@ export const INITIAL_VALUES: CSSStyleDict = {
   direction: keyword('ltr'),
   display: keyword('inline'),
   float: keyword('none'),
-  fontFamily: [indentifier('sans-serif')],
+  fontFamily: [identifier('sans-serif')],
   fontSize: keyword('medium'),
   fontStyle: keyword('normal'),
   fontVariant: keyword('normal'),

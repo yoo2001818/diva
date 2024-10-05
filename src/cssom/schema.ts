@@ -2,7 +2,6 @@ import {
   CSSBorderStyle,
   CSSKeyword,
   CSSLength,
-  CSSMargin,
   CSSPercentage,
   CSSStyleDict,
 } from './dict';
@@ -119,8 +118,8 @@ export const schema = {
   ),
   backgroundColor: entry('backgroundColor', stringifyColor, (v) =>
     v.oneOf(
-      () => v.color(),
       () => v.keyword('inherit'),
+      () => v.color(),
     ),
   ),
   backgroundImage: entry('backgroundImage', stringifyUrl, (v) =>
@@ -143,11 +142,86 @@ export const schema = {
       () => v.keyword('top', 'center', 'bottom', 'inherit'),
     ),
   ),
+  backgroundPosition: {
+    get(dict) {
+      return (
+        stringifySize(dict.backgroundPositionX) +
+        ' ' +
+        stringifySize(dict.backgroundPositionY)
+      );
+    },
+    set(dict, input) {
+      const items = parse(input, (v) =>
+        v.oneOf(
+          () => v.backgroundPosition(),
+          () => v.keyword('inherit'),
+        ),
+      );
+      if (items != null) {
+        if (Array.isArray(items)) {
+          dict.backgroundPositionX = items[0];
+          dict.backgroundPositionY = items[1];
+        } else {
+          dict.backgroundPositionX = items;
+          dict.backgroundPositionY = items;
+        }
+      }
+    },
+  },
   backgroundRepeat: entry('backgroundRepeat', stringifyKeyword, (v) =>
     v.keyword('repeat', 'repeat-x', 'repeat-y', 'no-repeat', 'inherit'),
   ),
-  // background-position
-  // background
+  background: {
+    get(dict) {
+      return [
+        stringifyColor(dict.backgroundColor),
+        stringifyUrl(dict.backgroundImage),
+        stringifyKeyword(dict.backgroundRepeat),
+        stringifyKeyword(dict.backgroundAttachment),
+        stringifySize(dict.backgroundPositionX),
+        stringifySize(dict.backgroundPositionY),
+      ].join(' ');
+    },
+    set(dict, input) {
+      const item = parse(input, (v) =>
+        v.oneOf(
+          () => v.keyword('inherit'),
+          () =>
+            v.any({
+              attachment: () => v.keyword('scroll', 'fixed'),
+              image: () =>
+                v.oneOf(
+                  () => v.url(),
+                  () => v.keyword('none'),
+                ),
+              position: () => v.backgroundPosition(),
+              repeat: () =>
+                v.keyword('repeat', 'repeat-x', 'repeat-y', 'no-repeat'),
+              color: () => v.color(),
+            }),
+        ),
+      );
+      if (item != null) {
+        if ('type' in item) {
+          dict.backgroundAttachment = item;
+          dict.backgroundImage = item;
+          dict.backgroundPositionX = item;
+          dict.backgroundPositionY = item;
+          dict.backgroundRepeat = item;
+          dict.backgroundColor = item;
+        } else {
+          if (item.attachment) dict.backgroundAttachment = item.attachment;
+          if (item.image) dict.backgroundImage = item.image;
+          if (item.repeat) dict.backgroundRepeat = item.repeat;
+          if (item.color) dict.backgroundColor = item.color;
+          if (item.position) {
+            dict.backgroundPositionX = item.position[0];
+            dict.backgroundPositionY = item.position[1];
+          }
+        }
+      }
+    },
+  },
   borderCollapse: entry('borderCollapse', stringifyKeyword, (v) =>
     v.keyword('collapse', 'separate', 'inherit'),
   ),
@@ -168,8 +242,8 @@ export const schema = {
   ),
   color: entry('color', stringifyColor, (v) =>
     v.oneOf(
-      () => v.color(),
       () => v.keyword('inherit'),
+      () => v.color(),
     ),
   ),
   direction: entry('direction', stringifyKeyword, (v) =>
