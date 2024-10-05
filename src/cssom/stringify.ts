@@ -1,5 +1,12 @@
 import equal from 'deep-equal';
-import { CSSKeyword, CSSLength, CSSPercentage } from './dict';
+import {
+  CSSColor,
+  CSSKeyword,
+  CSSLength,
+  CSSNumber,
+  CSSPercentage,
+  CSSUrl,
+} from './dict';
 
 export function stringifyLength(value: CSSLength): string {
   return String(value.value) + (value.unit ?? '');
@@ -45,4 +52,22 @@ export function stringifySideShorthand<T>(
   } else {
     return value.map((v) => stringify(v)).join(' ');
   }
+}
+
+export function stringifyColor<T extends string>(
+  value: CSSColor | CSSKeyword<T>,
+): string {
+  return String(value.type);
+}
+
+export function stringifyUrl<T extends string>(
+  value: CSSUrl | CSSKeyword<T>,
+): string {
+  return String(value.type);
+}
+
+export function stringifyNumber<T extends string>(
+  value: CSSNumber | CSSKeyword<T>,
+): string {
+  return String(value.type);
 }

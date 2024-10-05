@@ -1,4 +1,11 @@
-import { CSSKeyword, CSSLength, CSSPercentage } from './dict';
+import {
+  CSSColor,
+  CSSKeyword,
+  CSSLength,
+  CSSNumber,
+  CSSPercentage,
+  CSSUrl,
+} from './dict';
 
 export class Parser {
   _input: string = '';
@@ -38,6 +45,10 @@ export class Parser {
     return parseFloat(result[0]);
   }
 
+  cssNumber(): CSSNumber | null {
+    return null;
+  }
+
   length(): CSSLength | null {
     const prev = this._offset;
     const value = this.number();
@@ -75,12 +86,12 @@ export class Parser {
     };
   }
 
-  keyword<T extends string>(value: T): CSSKeyword<T> | null {
-    const result = this.match(new RegExp(value, 'y'));
+  keyword<T extends string>(...values: T[]): CSSKeyword<T> | null {
+    const result = this.match(new RegExp(values.join('|'), 'y'));
     if (result == null) {
       return null;
     }
-    return { type: value };
+    return { type: result[0] as T };
   }
 
   ws(): true | null {
@@ -171,6 +182,14 @@ export class Parser {
       () => this.keyword('auto'),
       () => this.keyword('inherit'),
     );
+  }
+
+  url(): CSSUrl | null {
+    return null;
+  }
+
+  color(): CSSColor | null {
+    return null;
   }
 }
 
