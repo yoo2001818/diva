@@ -1,6 +1,6 @@
 import { CSSStyleDict } from './dict';
 import { parse, Parser } from './parse';
-import { stringifyMargin, stringifySideShorthand } from './stringify';
+import { stringifySideShorthand, stringifySize } from './stringify';
 
 export interface CSSSchemaEntry {
   get(dict: CSSStyleDict): string;
@@ -68,13 +68,24 @@ export const schema = {
   ...sideShorthandSet(
     'padding',
     ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
-    stringifyMargin,
-    (v) => v.paddingEntry(),
+    stringifySize,
+    (v) =>
+      v.oneOf(
+        () => v.length(),
+        () => v.percentage(),
+        () => v.keyword('inherit'),
+      ),
   ),
   ...sideShorthandSet(
     'margin',
     ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
-    stringifyMargin,
-    (v) => v.marginEntry(),
+    stringifySize,
+    (v) =>
+      v.oneOf(
+        () => v.length(),
+        () => v.percentage(),
+        () => v.keyword('auto'),
+        () => v.keyword('inherit'),
+      ),
   ),
 } satisfies Record<string, CSSSchemaEntry>;

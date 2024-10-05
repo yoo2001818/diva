@@ -164,10 +164,6 @@ export class Parser {
     );
   }
 
-  padding() {
-    return this.sideShorthand(() => this.paddingEntry());
-  }
-
   marginEntry() {
     return this.oneOf(
       () => this.length(),
@@ -175,10 +171,6 @@ export class Parser {
       () => this.keyword('auto'),
       () => this.keyword('inherit'),
     );
-  }
-
-  margin() {
-    return this.sideShorthand(() => this.marginEntry());
   }
 }
 

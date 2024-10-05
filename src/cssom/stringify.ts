@@ -1,5 +1,5 @@
 import equal from 'deep-equal';
-import { CSSKeyword, CSSLength, CSSMargin, CSSPercentage } from './dict';
+import { CSSKeyword, CSSLength, CSSPercentage } from './dict';
 
 export function stringifyLength(value: CSSLength): string {
   return String(value.value) + (value.unit ?? '');
@@ -15,12 +15,14 @@ export function stringifyKeyword<T extends string>(
   return String(value.type);
 }
 
-export function stringifyMargin(value: CSSMargin): string {
+export function stringifySize(
+  value: CSSLength | CSSPercentage | CSSKeyword<any>,
+): string {
   switch (value.type) {
     case 'percentage':
-      return stringifyPercentage(value);
+      return stringifyPercentage(value as CSSPercentage);
     case 'length':
-      return stringifyLength(value);
+      return stringifyLength(value as CSSLength);
     default:
       return stringifyKeyword(value);
   }
