@@ -225,9 +225,47 @@ export const schema = {
   borderCollapse: entry('borderCollapse', stringifyKeyword, (v) =>
     v.keyword('collapse', 'separate', 'inherit'),
   ),
-  // border-color
-  // border-style
-  // border-width
+  ...sideShorthandSet(
+    'borderColor',
+    [
+      'borderTopColor',
+      'borderRightColor',
+      'borderBottomColor',
+      'borderLeftColor',
+    ],
+    stringifyColor,
+    (v) =>
+      v.oneOf(
+        () => v.keyword('inherit'),
+        () => v.color(),
+      ),
+  ),
+  ...sideShorthandSet(
+    'borderStyle',
+    [
+      'borderTopStyle',
+      'borderRightStyle',
+      'borderBottomStyle',
+      'borderLeftStyle',
+    ],
+    stringifyKeyword,
+    (v) => v.keyword(...BORDER_STYLES, 'inherit'),
+  ),
+  ...sideShorthandSet(
+    'borderWidth',
+    [
+      'borderTopWidth',
+      'borderRightWidth',
+      'borderBottomWidth',
+      'borderLeftWidth',
+    ],
+    stringifySize,
+    (v) =>
+      v.oneOf(
+        () => v.length(),
+        () => v.keyword('thin', 'medium', 'thick', 'inherit'),
+      ),
+  ),
   // border-top
   // border-right
   // border-bottom
@@ -320,8 +358,8 @@ export const schema = {
   ),
   outlineColor: entry('outlineColor', stringifyColor, (v) =>
     v.oneOf(
-      () => v.color(),
       () => v.keyword('invert', 'inherit'),
+      () => v.color(),
     ),
   ),
   outlineStyle: entry('outlineStyle', stringifyKeyword, (v) =>
