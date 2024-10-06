@@ -69,7 +69,7 @@ export function stringifyColor<T extends string>(
   switch (value.type) {
     case 'hash':
       return `#${(value as CSSHash).value}`;
-    case 'indentifier':
+    case 'identifier':
       return stringifyIdentifier(value as CSSIndentifier);
     case 'rgb': {
       const rgb = value as CSSRgb;

@@ -167,6 +167,7 @@ export class Parser {
         const key = remaining[i];
         const result = items[key]();
         if (result != null) {
+          this.ws();
           caught = true;
           output[key] = result;
         }
@@ -223,7 +224,7 @@ export class Parser {
   }
 
   hash(): CSSHash | null {
-    const result = this.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})/y);
+    const result = this.match(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})/y);
     if (result == null) {
       return null;
     }
