@@ -1,5 +1,7 @@
 import {
   CSSBorderStyle,
+  CSSBorderWidth,
+  CSSColor,
   CSSKeyword,
   CSSLength,
   CSSPercentage,
@@ -97,6 +99,72 @@ function sideShorthandSet<K extends keyof CSSStyleDict, K2 extends string>(
     [keys[3]]: entry(keys[3], get, parseFunc),
     [name]: sideShorthand(keys, get, parseFunc),
   } as Record<K | K2, CSSSchemaEntry>;
+}
+
+interface BorderEntryValue {
+  color: CSSColor | CSSKeyword<'inherit'>;
+  style: CSSBorderStyle | CSSKeyword<'inherit'>;
+  width: CSSBorderWidth | CSSKeyword<'inherit'>;
+}
+
+function borderEntry(
+  get: (dict: CSSStyleDict) => BorderEntryValue,
+  set: (dict: CSSStyleDict, value: BorderEntryValue) => void,
+): CSSSchemaEntry {
+  return {
+    get(dict) {
+      const { color, style, width } = get(dict);
+      return [
+        stringifySize(width),
+        stringifyKeyword(style),
+        stringifyColor(color),
+      ].join(' ');
+    },
+    set(dict, input) {
+      const item = parse(input, (v) =>
+        v.oneOf(
+          () => v.keyword('inherit'),
+          () =>
+            v.any({
+              width: () =>
+                v.oneOf(
+                  () => v.length(),
+                  () => v.keyword('thin', 'medium', 'thick'),
+                ),
+              style: () => v.keyword(...BORDER_STYLES),
+              color: () => v.color(),
+            }),
+        ),
+      );
+      if (item != null) {
+        if ('type' in item) {
+          set(dict, { color: item, style: item, width: item });
+        } else {
+          const prev = { ...get(dict), ...item };
+          set(dict, prev);
+        }
+      }
+    },
+  };
+}
+
+function borderEntryKey(
+  colorKey: KeysMatching<CSSStyleDict, BorderEntryValue['color']>[],
+  styleKey: KeysMatching<CSSStyleDict, BorderEntryValue['style']>[],
+  widthKey: KeysMatching<CSSStyleDict, BorderEntryValue['width']>[],
+): CSSSchemaEntry {
+  return borderEntry(
+    (dict) => ({
+      width: dict[widthKey[0]],
+      style: dict[styleKey[0]],
+      color: dict[colorKey[0]],
+    }),
+    (dict, value) => {
+      widthKey.forEach((k) => (dict[k] = value.width));
+      styleKey.forEach((k) => (dict[k] = value.style));
+      colorKey.forEach((k) => (dict[k] = value.color));
+    },
+  );
 }
 
 const BORDER_STYLES: CSSBorderStyle['type'][] = [
@@ -266,11 +334,46 @@ export const schema = {
         () => v.keyword('thin', 'medium', 'thick', 'inherit'),
       ),
   ),
-  // border-top
-  // border-right
-  // border-bottom
-  // border-left
-  // border
+  borderTop: borderEntryKey(
+    ['borderTopColor'],
+    ['borderTopStyle'],
+    ['borderTopWidth'],
+  ),
+  borderRight: borderEntryKey(
+    ['borderRightColor'],
+    ['borderRightStyle'],
+    ['borderRightWidth'],
+  ),
+  borderBottom: borderEntryKey(
+    ['borderBottomColor'],
+    ['borderBottomStyle'],
+    ['borderBottomWidth'],
+  ),
+  borderLeft: borderEntryKey(
+    ['borderLeftColor'],
+    ['borderLeftStyle'],
+    ['borderLeftWidth'],
+  ),
+  border: borderEntryKey(
+    [
+      'borderTopColor',
+      'borderRightColor',
+      'borderBottomColor',
+      'borderLeftColor',
+    ],
+    [
+      'borderTopStyle',
+      'borderRightStyle',
+      'borderBottomStyle',
+      'borderLeftStyle',
+    ],
+    [
+      'borderTopWidth',
+      'borderRightWidth',
+      'borderBottomWidth',
+      'borderLeftWidth',
+    ],
+  ),
   top: sizeEntry('top', ['auto', 'inherit']),
   right: sizeEntry('right', ['auto', 'inherit']),
   bottom: sizeEntry('bottom', ['auto', 'inherit']),

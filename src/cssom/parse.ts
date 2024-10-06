@@ -157,7 +157,7 @@ export class Parser {
 
   any<T extends Record<string, () => any>>(
     items: T,
-  ): { [K in keyof T]: ReturnType<T[K]> | null } {
+  ): { [K in keyof T]?: NonNullable<ReturnType<T[K]>> } {
     const output: Record<string, any> = {};
     while (true) {
       const remaining = Object.keys(items).filter((key) => output[key] == null);
