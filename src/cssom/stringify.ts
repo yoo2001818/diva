@@ -26,9 +26,11 @@ export function stringifyKeyword<T extends string>(
 }
 
 export function stringifySize(
-  value: CSSLength | CSSPercentage | CSSKeyword<any>,
+  value: CSSLength | CSSPercentage | CSSNumber | CSSKeyword<any>,
 ): string {
   switch (value.type) {
+    case 'number':
+      return stringifyNumber(value as CSSNumber);
     case 'percentage':
       return stringifyPercentage(value as CSSPercentage);
     case 'length':

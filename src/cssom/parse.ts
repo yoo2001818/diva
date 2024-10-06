@@ -231,7 +231,7 @@ export class Parser {
   }
 
   identifier(): CSSIndentifier | null {
-    const result = this.match(/[a-zA-Z0-9-]+/y);
+    const result = this.match(/[a-zA-Z][a-zA-Z0-9-]*/y);
     if (result == null) {
       return null;
     }

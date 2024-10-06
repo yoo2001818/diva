@@ -414,7 +414,25 @@ export const schema = {
     v.keyword('left', 'right', 'none', 'inherit'),
   ),
   // font-family
-  // font-size
+  fontSize: entry('fontSize', stringifySize, (v) =>
+    v.oneOf(
+      () =>
+        v.keyword(
+          'xx-small',
+          'x-small',
+          'small',
+          'medium',
+          'large',
+          'x-large',
+          'xx-large',
+          'larger',
+          'smaller',
+          'inherit',
+        ),
+      () => v.length(),
+      () => v.percentage(),
+    ),
+  ),
   fontStyle: entry('fontStyle', stringifyKeyword, (v) =>
     v.keyword('normal', 'italic', 'oblique', 'inherit'),
   ),
@@ -434,8 +452,20 @@ export const schema = {
   minHeight: sizeEntry('minHeight', ['inherit']),
   maxWidth: sizeEntry('maxWidth', ['none', 'inherit']),
   maxHeight: sizeEntry('maxHeight', ['none', 'inherit']),
-  // letter-spacing
-  // line-height
+  letterSpacing: entry('letterSpacing', stringifySize, (v) =>
+    v.oneOf(
+      () => v.keyword('normal', 'inherit'),
+      () => v.length(),
+    ),
+  ),
+  lineHeight: entry('lineHeight', stringifySize, (v) =>
+    v.oneOf(
+      () => v.keyword('normal', 'inherit'),
+      () => v.length(),
+      () => v.percentage(),
+      () => v.cssNumber(),
+    ),
+  ),
   ...sideShorthandSet(
     'padding',
     ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
@@ -474,7 +504,47 @@ export const schema = {
       () => v.keyword('thin', 'medium', 'thick', 'inherit'),
     ),
   ),
-  // outline
+  outline: {
+    get(dict) {
+      return [
+        stringifySize(dict.outlineWidth),
+        stringifyKeyword(dict.outlineStyle),
+        stringifyColor(dict.outlineColor),
+      ].join(' ');
+    },
+    set(dict, input) {
+      const item = parse(input, (v) =>
+        v.oneOf(
+          () => v.keyword('inherit'),
+          () =>
+            v.any({
+              width: () =>
+                v.oneOf(
+                  () => v.length(),
+                  () => v.keyword('thin', 'medium', 'thick'),
+                ),
+              style: () => v.keyword(...BORDER_STYLES),
+              color: () =>
+                v.oneOf(
+                  () => v.keyword('invert'),
+                  () => v.color(),
+                ),
+            }),
+        ),
+      );
+      if (item != null) {
+        if ('type' in item) {
+          dict.outlineWidth = item;
+          dict.outlineStyle = item;
+          dict.outlineColor = item;
+        } else {
+          if (item.width) dict.outlineWidth = item.width;
+          if (item.style) dict.outlineStyle = item.style;
+          if (item.color) dict.outlineColor = item.color;
+        }
+      }
+    },
+  },
   overflow: entry('overflow', stringifyKeyword, (v) =>
     v.keyword('visible', 'hidden', 'scroll', 'auto', 'inherit'),
   ),
@@ -506,6 +576,16 @@ export const schema = {
   whiteSpace: entry('whiteSpace', stringifyKeyword, (v) =>
     v.keyword('normal', 'pre', 'nowrap', 'pre-wrap', 'pre-line', 'inherit'),
   ),
-  // word-spacing
-  // z-index
+  wordSpacing: entry('wordSpacing', stringifySize, (v) =>
+    v.oneOf(
+      () => v.keyword('normal', 'inherit'),
+      () => v.length(),
+    ),
+  ),
+  zIndex: entry('zIndex', stringifyNumber, (v) =>
+    v.oneOf(
+      () => v.keyword('auto', 'inherit'),
+      () => v.cssNumber(),
+    ),
+  ),
 } satisfies Record<string, CSSSchemaEntry>;
