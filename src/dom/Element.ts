@@ -40,6 +40,7 @@ export class Element
   _classList: DOMTokenList = new DOMTokenList();
   _slot: string = '';
   _attributes: NamedNodeMap = new NamedNodeMap(this);
+  _styleData: unknown;
 
   constructor(document: Document, tagName: string) {
     super(document);
