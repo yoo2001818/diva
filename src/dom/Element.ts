@@ -41,6 +41,7 @@ export class Element
   _slot: string = '';
   _attributes: NamedNodeMap = new NamedNodeMap(this);
   _styleData: unknown;
+  _style: CSSStyleDeclaration = new CSSStyleDeclaration();
 
   constructor(document: Document, tagName: string) {
     super(document);
@@ -425,5 +426,9 @@ export class Element
       }
     }
     return true;
+  }
+
+  get style(): CSSStyleDeclaration {
+    return this._style;
   }
 }
