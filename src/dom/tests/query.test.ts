@@ -4,7 +4,7 @@ import { Document } from '../Document';
 
 describe('Handles Element.matches()', () => {
   let document: Document;
-  let div: Element
+  let div: Element;
   let span: Element;
 
   beforeEach(() => {
@@ -33,8 +33,8 @@ describe('Handles Element.matches()', () => {
   it('should match an attribute selector', () => {
     expect(span.matches('[data-role="info"]')).toBe(true);
     expect(span.matches('[data-role^="inf"]')).toBe(true); // Starts with
-    expect(span.matches('[data-role$="o"]')).toBe(true);   // Ends with
-    expect(span.matches('[data-role*="x"]')).toBe(false);  // Doesn't contain 'n'
+    expect(span.matches('[data-role$="o"]')).toBe(true); // Ends with
+    expect(span.matches('[data-role*="x"]')).toBe(false); // Doesn't contain 'n'
   });
 
   it('should match a descendant selector', () => {

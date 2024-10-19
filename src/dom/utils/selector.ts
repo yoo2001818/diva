@@ -1,7 +1,15 @@
-import { Combinator, ComplexSelector, CompoundSelector, SimpleSelector } from "../../parser/selector";
-import { Element } from "../Element";
+import {
+  Combinator,
+  ComplexSelector,
+  CompoundSelector,
+  SimpleSelector,
+} from '../../parser/selector';
+import { Element } from '../Element';
 
-function matchSimpleSelector(element: Element, selector: SimpleSelector): boolean {
+function matchSimpleSelector(
+  element: Element,
+  selector: SimpleSelector,
+): boolean {
   switch (selector.type) {
     case 'attributeSelector': {
       let attr = element.getAttribute(selector.name);
@@ -51,13 +59,19 @@ function matchSimpleSelector(element: Element, selector: SimpleSelector): boolea
   }
 }
 
-function matchCompoundSelector(element: Element, selector: CompoundSelector): boolean {
+function matchCompoundSelector(
+  element: Element,
+  selector: CompoundSelector,
+): boolean {
   // TODO: Pseudo elements need to be taken account of as well, however it's
   // impossible to match real elements with selectors specifying pseudo elements.
   return selector.children.every((v) => matchSimpleSelector(element, v));
 }
 
-function getCombinatorCandidates(element: Element, combinator: Combinator): Element[] {
+function getCombinatorCandidates(
+  element: Element,
+  combinator: Combinator,
+): Element[] {
   switch (combinator.name) {
     case ' ': {
       const parents: Element[] = [];
@@ -91,7 +105,10 @@ function getCombinatorCandidates(element: Element, combinator: Combinator): Elem
   }
 }
 
-function matchComplexSelector(element: Element, selector: ComplexSelector): boolean {
+function matchComplexSelector(
+  element: Element,
+  selector: ComplexSelector,
+): boolean {
   // Starting from the last selector, navigate the hierarchy of selectors.
   // If there's an adequate node that matches further condition, that node
   // will be used for matching further selectors and combinators.
@@ -111,7 +128,9 @@ function matchComplexSelector(element: Element, selector: ComplexSelector): bool
     const combinator = children[i] as Combinator;
     const selector = children[i - 1] as CompoundSelector;
     const candidates = getCombinatorCandidates(currentNode, combinator);
-    const candidate = candidates.find((v) => matchCompoundSelector(v, selector));
+    const candidate = candidates.find((v) =>
+      matchCompoundSelector(v, selector),
+    );
     if (candidate != null) {
       currentNode = candidate;
     } else {
@@ -121,6 +140,9 @@ function matchComplexSelector(element: Element, selector: ComplexSelector): bool
   return true;
 }
 
-export function matchSelector(element: Element, selector: ComplexSelector[]): boolean {
+export function matchSelector(
+  element: Element,
+  selector: ComplexSelector[],
+): boolean {
   return selector.some((v) => matchComplexSelector(element, v));
 }

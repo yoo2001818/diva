@@ -1,3 +1,4 @@
+import { StyleData } from '../layout/StyleData';
 import { parseHtml } from '../parser/html';
 import { ComplexSelector, parseSelectors } from '../parser/selector';
 import { Attr } from './Attr';
@@ -41,7 +42,6 @@ export class Element
   _slot: string = '';
   _attributes: NamedNodeMap = new NamedNodeMap(this);
   _styleData: unknown;
-  _style: CSSStyleDeclaration = new CSSStyleDeclaration();
 
   constructor(document: Document, tagName: string) {
     super(document);
@@ -428,7 +428,14 @@ export class Element
     return true;
   }
 
-  get style(): CSSStyleDeclaration {
-    return this._style;
+  get styleData(): StyleData {
+    if (this._styleData == null) {
+      this._styleData = new StyleData(this);
+    }
+    return this._styleData as StyleData;
+  }
+
+  style(): CSSStyleDeclaration {
+    return this.styleData.style;
   }
 }
