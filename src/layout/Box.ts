@@ -10,6 +10,14 @@ export class Spacing {
   right: number = 0;
   bottom: number = 0;
   left: number = 0;
+
+  get width(): number {
+    return this.left + this.right;
+  }
+
+  get height(): number {
+    return this.top + this.bottom;
+  }
 }
 
 export class LayoutBox {
@@ -18,13 +26,4 @@ export class LayoutBox {
   contentWidth: number = 0;
   contentHeight: number = 0;
   definesOffset: boolean = false;
-  padding: Spacing = new Spacing();
-
-  get clientWidth(): number {
-    return this.padding.left + this.padding.right + this.contentWidth;
-  }
-
-  get clientHeight(): number {
-    return this.padding.top + this.padding.bottom + this.contentHeight;
-  }
 }

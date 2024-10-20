@@ -9,6 +9,7 @@ export class StyleData {
 
   margin: Spacing = new Spacing();
   border: Spacing = new Spacing();
+  padding: Spacing = new Spacing();
   // Principal block -> additional boxes -> inline boxes
   boxes: LayoutBox[] = [];
 
@@ -20,6 +21,10 @@ export class StyleData {
 
   constructor(node: Node) {
     this.node = node;
+  }
+
+  get principalBox(): LayoutBox {
+    return this.boxes[0]!;
   }
 
   layout(containingBox: LayoutBox): void {
