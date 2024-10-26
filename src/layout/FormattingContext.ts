@@ -1,5 +1,27 @@
+import { CSSLength } from '../cssom/dict';
 import { LayoutBox } from './Box';
 import { StyleData } from './StyleData';
+
+export function calcLength(value: CSSLength, _item: StyleData): number {
+  // Assume everything in px for now
+  return value.value;
+}
+
+export function calcWidth(containingBox: LayoutBox, item: StyleData): number {
+  const width = item.style._getRaw('width');
+  switch (width.type) {
+    case 'auto':
+      return containingBox.contentWidth;
+    case 'inherit':
+      return 0;
+    case 'length':
+      return calcLength(width, item);
+    case 'percentage':
+      return containingBox.contentWidth * (width.value / 100);
+    default:
+      return 0;
+  }
+}
 
 export function layoutBlocks(
   containingBox: LayoutBox,
