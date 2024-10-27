@@ -2,6 +2,7 @@ import type { Element } from '../dom/Element';
 import type { Node } from '../dom/Node';
 import { LayoutBox, Spacing } from './Box';
 import { layoutBlocks } from './FormattingContext';
+import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 
 export class StyleData {
   node: Node;

@@ -11,7 +11,7 @@ export function calcWidth(containingBox: LayoutBox, item: StyleData): number {
   const width = item.style._getRaw('width');
   switch (width.type) {
     case 'auto':
-      return containingBox.contentWidth;
+      return containingBox.contentWidth - item.margin.width;
     case 'inherit':
       return 0;
     case 'length':
@@ -31,14 +31,14 @@ export function layoutBlocks(
   // Disregard floats for now
   const parentLeft = containingBox.offsetLeft;
   const parentTop = containingBox.offsetTop;
-  const parentWidth = containingBox.contentWidth;
+  const setWidth = calcWidth(containingBox, item);
 
   let height = 0;
   const box = new LayoutBox();
   box.offsetLeft = parentLeft;
   box.offsetTop = parentTop;
-  box.contentWidth =
-    parentWidth - item.margin.width - item.border.width - item.padding.width;
+  // Assuming border-box
+  box.contentWidth = setWidth - item.border.width - item.padding.width;
 
   children.forEach((child) => {
     child.layout(box);

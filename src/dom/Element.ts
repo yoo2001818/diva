@@ -1,3 +1,4 @@
+import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { StyleData } from '../layout/StyleData';
 import { parseHtml } from '../parser/html';
 import { ComplexSelector, parseSelectors } from '../parser/selector';
