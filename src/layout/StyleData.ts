@@ -3,10 +3,12 @@ import type { Node } from '../dom/Node';
 import { LayoutBox, Spacing } from './Box';
 import { layoutBlocks } from './FormattingContext';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
+import { ComputedStyle } from './ComputedStyle';
 
 export class StyleData {
   node: Node;
   style: CSSStyleDeclaration = new CSSStyleDeclaration();
+  computedStyle: ComputedStyle = new ComputedStyle(this);
 
   margin: Spacing = new Spacing();
   border: Spacing = new Spacing();
