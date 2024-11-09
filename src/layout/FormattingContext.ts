@@ -52,4 +52,6 @@ export function layoutBlocks(
   box.contentHeight = height;
 
   item.boxes[0] = box;
+  item.scrollWidth = box.contentWidth;
+  item.scrollHeight = height;
 }
