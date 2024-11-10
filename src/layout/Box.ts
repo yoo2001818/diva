@@ -21,9 +21,18 @@ export class Spacing {
 }
 
 export class LayoutBox {
+  margin: Spacing = new Spacing();
+  border: Spacing = new Spacing();
+  padding: Spacing = new Spacing();
   offsetTop: number = 0;
   offsetLeft: number = 0;
   contentWidth: number = 0;
   contentHeight: number = 0;
-  definesOffset: boolean = false;
+  scrollTop: number = 0;
+  scrollLeft: number = 0;
+  scrollWidth: number = 0;
+  scrollHeight: number = 0;
+
+  // Contents intrinsic to the node, e.g. background, color, border,
+  // are described here
 }

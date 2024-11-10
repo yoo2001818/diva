@@ -95,4 +95,9 @@ export class ComputedStyle {
     }
     return value as any;
   }
+
+  getPx(key: keyof CSSStyleDict): number {
+    // FIXME: This is not workable
+    return (this.get(key) as CSSLength).value;
+  }
 }

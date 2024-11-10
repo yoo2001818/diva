@@ -11,7 +11,8 @@ export function calcWidth(containingBox: LayoutBox, item: StyleData): number {
   const width = item.style._getRaw('width');
   switch (width.type) {
     case 'auto':
-      return containingBox.contentWidth - item.margin.width;
+      // Well, we can't do anything yet
+      return containingBox.contentWidth;
     case 'inherit':
       return 0;
     case 'length':
@@ -21,6 +22,21 @@ export function calcWidth(containingBox: LayoutBox, item: StyleData): number {
     default:
       return 0;
   }
+}
+
+export function updateBoxStyles(box: LayoutBox, item: StyleData): void {
+  box.border.top = item.computedStyle.getPx('borderTopWidth');
+  box.border.left = item.computedStyle.getPx('borderLeftWidth');
+  box.border.right = item.computedStyle.getPx('borderRightWidth');
+  box.border.bottom = item.computedStyle.getPx('borderBottomWidth');
+  box.padding.top = item.computedStyle.getPx('paddingTop');
+  box.padding.left = item.computedStyle.getPx('paddingLeft');
+  box.padding.right = item.computedStyle.getPx('paddingRight');
+  box.padding.bottom = item.computedStyle.getPx('paddingBottom');
+  box.margin.top = item.computedStyle.getPx('marginTop');
+  box.margin.left = item.computedStyle.getPx('marginLeft');
+  box.margin.right = item.computedStyle.getPx('marginRight');
+  box.margin.bottom = item.computedStyle.getPx('marginBottom');
 }
 
 export function layoutBlocks(
@@ -35,23 +51,23 @@ export function layoutBlocks(
 
   let height = 0;
   const box = new LayoutBox();
+  updateBoxStyles(box, item);
   box.offsetLeft = parentLeft;
   box.offsetTop = parentTop;
   // Assuming border-box
-  box.contentWidth = setWidth - item.border.width - item.padding.width;
+  box.contentWidth = setWidth - box.border.width - box.padding.width;
 
   children.forEach((child) => {
     child.layout(box);
+    const childBox = child.principalBox;
     height +=
-      child.principalBox.contentHeight +
-      child.margin.height +
-      child.border.height +
-      child.padding.height;
+      childBox.contentHeight +
+      childBox.margin.height +
+      childBox.border.height +
+      childBox.padding.height;
   });
 
   box.contentHeight = height;
 
   item.boxes[0] = box;
-  item.scrollWidth = box.contentWidth;
-  item.scrollHeight = height;
 }

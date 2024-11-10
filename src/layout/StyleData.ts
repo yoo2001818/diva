@@ -10,17 +10,15 @@ export class StyleData {
   style: CSSStyleDeclaration = new CSSStyleDeclaration();
   computedStyle: ComputedStyle = new ComputedStyle(this);
 
-  margin: Spacing = new Spacing();
-  border: Spacing = new Spacing();
-  padding: Spacing = new Spacing();
+  // Each box will contain all properties necessary to render the node
+  // (to allow pseudo and inline elements)
+  // Box's width or height, location can be determined dynamically, but its
+  // margin/border/padding will be determined on creation
+  // Each box's location is determined relative to the parent's box.
   // Principal block -> additional boxes -> inline boxes
   boxes: LayoutBox[] = [];
 
   offsetParent: Element | null = null;
-  scrollTop: number = 0;
-  scrollLeft: number = 0;
-  scrollWidth: number = 0;
-  scrollHeight: number = 0;
 
   constructor(node: Node) {
     this.node = node;
