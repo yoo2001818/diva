@@ -58,13 +58,20 @@ export function layoutBlocks(
   box.contentWidth = setWidth - box.border.width - box.padding.width;
 
   children.forEach((child) => {
-    child.layout(box);
-    const childBox = child.principalBox;
+    // Pass a box with correct location, and parent height
+    // TODO: Couldn't this just use a regular box?
+    const childBox = new LayoutBox();
+    childBox.offsetTop = parentTop + box.border.top + box.padding.top + height;
+    childBox.offsetLeft = parentLeft + box.border.left + box.padding.left;
+    childBox.contentWidth = box.contentWidth;
+    childBox.contentHeight = containingBox.contentHeight;
+    child.layout(childBox);
+    const childPrincipalBox = child.principalBox;
     height +=
-      childBox.contentHeight +
-      childBox.margin.height +
-      childBox.border.height +
-      childBox.padding.height;
+      childPrincipalBox.contentHeight +
+      childPrincipalBox.margin.height +
+      childPrincipalBox.border.height +
+      childPrincipalBox.padding.height;
   });
 
   box.contentHeight = height;
