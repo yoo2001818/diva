@@ -1,5 +1,5 @@
 import { CSSLength } from '../cssom/dict';
-import { LayoutBox } from './Box';
+import { Box, LayoutBox } from './Box';
 import { StyleData } from './StyleData';
 
 export function calcLength(value: CSSLength, _item: StyleData): number {
@@ -7,18 +7,18 @@ export function calcLength(value: CSSLength, _item: StyleData): number {
   return value.value;
 }
 
-export function calcWidth(containingBox: LayoutBox, item: StyleData): number {
+export function calcWidth(containingBox: Box, item: StyleData): number {
   const width = item.style._getRaw('width');
   switch (width.type) {
     case 'auto':
       // Well, we can't do anything yet
-      return containingBox.contentWidth;
+      return containingBox.width;
     case 'inherit':
       return 0;
     case 'length':
       return calcLength(width, item);
     case 'percentage':
-      return containingBox.contentWidth * (width.value / 100);
+      return containingBox.width * (width.value / 100);
     default:
       return 0;
   }
@@ -40,13 +40,13 @@ export function updateBoxStyles(box: LayoutBox, item: StyleData): void {
 }
 
 export function layoutBlocks(
-  containingBox: LayoutBox,
+  containingBox: Box,
   item: StyleData,
   children: StyleData[],
 ): void {
   // Disregard floats for now
-  const parentLeft = containingBox.offsetLeft;
-  const parentTop = containingBox.offsetTop;
+  const parentLeft = containingBox.left;
+  const parentTop = containingBox.top;
   const setWidth = calcWidth(containingBox, item);
 
   let height = 0;
@@ -60,11 +60,11 @@ export function layoutBlocks(
   children.forEach((child) => {
     // Pass a box with correct location, and parent height
     // TODO: Couldn't this just use a regular box?
-    const childBox = new LayoutBox();
-    childBox.offsetTop = parentTop + box.border.top + box.padding.top + height;
-    childBox.offsetLeft = parentLeft + box.border.left + box.padding.left;
-    childBox.contentWidth = box.contentWidth;
-    childBox.contentHeight = containingBox.contentHeight;
+    const childBox = new Box();
+    childBox.top = parentTop + box.border.top + box.padding.top + height;
+    childBox.left = parentLeft + box.border.left + box.padding.left;
+    childBox.width = box.contentWidth;
+    childBox.height = containingBox.height;
     child.layout(childBox);
     const childPrincipalBox = child.principalBox;
     height +=
