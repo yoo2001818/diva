@@ -1,6 +1,6 @@
 import type { Element } from '../dom/Element';
 import type { Node } from '../dom/Node';
-import { LayoutBox, Spacing } from './Box';
+import { Box, LayoutBox, Spacing } from './Box';
 import { layoutBlocks } from './FormattingContext';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { ComputedStyle } from './ComputedStyle';
@@ -24,20 +24,20 @@ export class StyleData {
     this.node = node;
   }
 
-  get principalBox(): LayoutBox {
-    return this.boxes[0]!;
-  }
-
-  layout(containingBox: LayoutBox): void {
-    // Assuming the block layout..
+  get children(): StyleData[] {
     const children: Element[] = [];
     for (let i = 0; i < (this.node as Element).children.length; i += 1) {
       children.push((this.node as Element).children[i]);
     }
-    layoutBlocks(
-      containingBox,
-      this,
-      children.map((v) => v.styleData),
-    );
+    return children.map((v) => v.styleData);
+  }
+
+  get principalBox(): LayoutBox {
+    return this.boxes[0]!;
+  }
+
+  layout(containingBox: Box): void {
+    // Assuming the block layout..
+    layoutBlocks(containingBox, this, this.children);
   }
 }
