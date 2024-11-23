@@ -35,4 +35,11 @@ export class LayoutBox {
 
   // Contents intrinsic to the node, e.g. background, color, border,
   // are described here
+  get clientWidth(): number {
+    return this.contentWidth + this.border.width + this.padding.width;
+  }
+
+  get clientHeight(): number {
+    return this.contentHeight + this.border.height + this.padding.height;
+  }
 }

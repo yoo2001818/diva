@@ -5,10 +5,12 @@ import { StyleData } from '../layout/StyleData';
 export class CanvasRenderer {
   doc: Document;
   canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
 
   constructor(doc: Document, canvas: HTMLCanvasElement) {
     this.doc = doc;
     this.canvas = canvas;
+    this.ctx = canvas.getContext('2d')!;
   }
 
   layout(): void {
@@ -33,8 +35,14 @@ export class CanvasRenderer {
   }
 
   _renderStyle(styleData: StyleData): void {
+    const ctx = this.ctx;
     styleData.boxes.forEach((box) => {
-      // ...
+      ctx.fillRect(
+        box.offsetTop,
+        box.offsetLeft,
+        box.clientWidth,
+        box.clientHeight,
+      );
     });
     styleData.children.forEach((child) => {
       this._renderStyle(child);
