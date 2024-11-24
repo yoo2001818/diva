@@ -1,3 +1,5 @@
+import { CSSBorderStyle, CSSBorderWidth, CSSColor } from '../cssom/dict';
+
 export class Box {
   top: number = 0;
   left: number = 0;
@@ -20,6 +22,15 @@ export class Spacing {
   }
 }
 
+export class BorderStyle {
+  style: CSSBorderStyle = { type: 'solid' };
+  color: CSSColor = { type: 'hash', value: '000000' };
+}
+
+export class BackgroundStyle {
+  color: CSSColor = { type: 'hash', value: 'ffffff' };
+}
+
 export class LayoutBox {
   margin: Spacing = new Spacing();
   border: Spacing = new Spacing();
@@ -32,6 +43,11 @@ export class LayoutBox {
   scrollLeft: number = 0;
   scrollWidth: number = 0;
   scrollHeight: number = 0;
+  borderTopStyle: BorderStyle = new BorderStyle();
+  borderRightStyle: BorderStyle = new BorderStyle();
+  borderBottomStyle: BorderStyle = new BorderStyle();
+  borderLeftStyle: BorderStyle = new BorderStyle();
+  background: BackgroundStyle = new BackgroundStyle();
 
   // Contents intrinsic to the node, e.g. background, color, border,
   // are described here
