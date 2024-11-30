@@ -1,3 +1,4 @@
+import { CSSHash } from '../cssom/dict';
 import { Document } from '../dom/Document';
 import { Box } from '../layout/Box';
 import { StyleData } from '../layout/StyleData';
@@ -37,6 +38,7 @@ export class CanvasRenderer {
   _renderStyle(styleData: StyleData): void {
     const ctx = this.ctx;
     styleData.boxes.forEach((box) => {
+      ctx.fillStyle = '#' + (box.background.color as CSSHash).value;
       ctx.fillRect(
         box.offsetTop,
         box.offsetLeft,
