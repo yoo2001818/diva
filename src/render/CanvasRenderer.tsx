@@ -1,4 +1,3 @@
-import { CSSHash } from '../cssom/dict';
 import { Document } from '../dom/Document';
 import { Box } from '../layout/Box';
 import { StyleData } from '../layout/StyleData';

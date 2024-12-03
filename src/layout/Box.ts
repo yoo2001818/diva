@@ -1,4 +1,4 @@
-import { CSSBorderStyle, CSSBorderWidth, CSSColor } from '../cssom/dict';
+import { CSSBorderStyle, CSSColor } from '../cssom/dict';
 
 export class Box {
   top: number = 0;
