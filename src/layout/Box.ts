@@ -1,4 +1,4 @@
-import { CSSBorderStyle, CSSColor } from '../cssom/dict';
+import { CSSBorderStyle, CSSColor, CSSStyleDict } from '../cssom/dict';
 
 export class Box {
   top: number = 0;
@@ -58,4 +58,13 @@ export class LayoutBox {
   get clientHeight(): number {
     return this.contentHeight + this.border.height + this.padding.height;
   }
+}
+
+export class TextBox extends LayoutBox {
+  text: string = '';
+  fontSize: number = 16;
+  fontStyle: CSSStyleDict['fontStyle'] = { type: 'normal' };
+  fontVariant: CSSStyleDict['fontVariant'] = { type: 'normal' };
+  fontWeight: number = 400;
+  lineHeight: number = 22;
 }
