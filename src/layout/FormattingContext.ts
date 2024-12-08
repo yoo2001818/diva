@@ -67,11 +67,7 @@ export function layoutBlocks(
     childBox.height = containingBox.height;
     child.layout(childBox);
     const childPrincipalBox = child.principalBox;
-    height +=
-      childPrincipalBox.contentHeight +
-      childPrincipalBox.margin.height +
-      childPrincipalBox.border.height +
-      childPrincipalBox.padding.height;
+    height += childPrincipalBox.clientHeight + childPrincipalBox.margin.height;
   });
 
   box.contentHeight = height;
