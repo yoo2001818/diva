@@ -17,3 +17,7 @@ by specifying width/height.
 The box can operate in two modes (formatting context), "block" and "inline"
 modes. In many cases, each element has a required formatting context, and
 an anonymous box will be created if the parent do not satisfy the required mode.
+
+In a sense, the box tree is vaguely similar to the HTML element tree, but
+they're not equal. The box tree can be described within HTML tree though, using
+shadow trees and whatnot.
