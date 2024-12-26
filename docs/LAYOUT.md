@@ -37,3 +37,17 @@ Unlike outward placement, inward placement doesn't have means to specify the
 size by the node itself. While it will be equal to larger than the outward
 bounding box, there are no means to specify it with the element alone. Instead,
 child elements must extend the box by being larger than the parent element.
+
+### Bounding box
+
+OutwardBox = Content Width + Padding Width + Scrollbar Width + Border Width
+InwardBox = Content Width + Padding Width
+
+The parent node doesn't need to know the padding/scroll/border, etc - it only
+needs to know the outward box, and the margin to place it.
+
+Likewise, the child node doesn't need to know the outward box, it only needs to
+know content width.
+
+Since each node may freely scrolled, each child node must work in relative to
+parent's offset if it's attached to the parent node.
