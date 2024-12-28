@@ -32,17 +32,14 @@ export class BackgroundStyle {
 }
 
 export class LayoutBox {
-  margin: Spacing = new Spacing();
-  border: Spacing = new Spacing();
-  padding: Spacing = new Spacing();
+  outsideBox: Box = new Box();
+  insideBox: Box = new Box();
   offsetTop: number = 0;
   offsetLeft: number = 0;
-  contentWidth: number = 0;
-  contentHeight: number = 0;
   scrollTop: number = 0;
   scrollLeft: number = 0;
-  scrollWidth: number = 0;
-  scrollHeight: number = 0;
+  margin: Spacing = new Spacing();
+  border: Spacing = new Spacing();
   borderTopStyle: BorderStyle = new BorderStyle();
   borderRightStyle: BorderStyle = new BorderStyle();
   borderBottomStyle: BorderStyle = new BorderStyle();
@@ -52,11 +49,11 @@ export class LayoutBox {
   // Contents intrinsic to the node, e.g. background, color, border,
   // are described here
   get clientWidth(): number {
-    return this.contentWidth + this.border.width + this.padding.width;
+    return this.outsideBox.width;
   }
 
   get clientHeight(): number {
-    return this.contentHeight + this.border.height + this.padding.height;
+    return this.outsideBox.height;
   }
 }
 
