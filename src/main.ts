@@ -15,13 +15,22 @@ container.style.padding = '10px';
 container.style.border = '10px solid #ff0000';
 container.style.background = '#00ff00';
 
-const child = doc.createElement('div');
-child.className = 'child';
-child.style.height = '20px';
-child.style.background = '#ffff00';
+for (let i = 0; i < 10; i += 1) {
+  const child = doc.createElement('div');
+  child.className = 'child';
+  child.style.height = '20px';
+  child.style.width = String((i + 1) * 20) + 'px';
+  child.style.background = '#ffff00';
+  container.append(child);
+}
 
-container.append(child);
 doc.documentElement!.append(container);
 
 renderer.layout();
 renderer.render();
+
+const compareContainer = document.createElement('div');
+compareContainer.style.width = '1024px';
+compareContainer.style.height = '768px';
+compareContainer.innerHTML = doc.documentElement!.innerHTML;
+document.body.appendChild(compareContainer);

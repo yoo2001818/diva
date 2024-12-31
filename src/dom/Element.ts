@@ -291,7 +291,18 @@ export class Element
     parseHtml(value, this.ownerDocument!, this);
   }
 
+  // FIXME: This is just a temporary mechanism to update 'id', 'class', 'style'
+  // attributes while getting innerHTML/outerHTML. However, it needs to be
+  // dynamically updated whenever id/className/style values change, so this is
+  // not adequate.
+  _updateAttributes(): void {
+    this.setAttribute('id', this.id);
+    this.setAttribute('class', this.className);
+    this.setAttribute('style', this.style.cssText);
+  }
+
   get outerHTML(): string {
+    this._updateAttributes();
     let s = '';
     s += '<';
     s += this.tagName.toLowerCase();
