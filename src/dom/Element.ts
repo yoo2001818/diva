@@ -436,7 +436,7 @@ export class Element
     return this._styleData as StyleData;
   }
 
-  style(): CSSStyleDeclaration {
+  get style(): CSSStyleDeclaration {
     return this.styleData.style;
   }
 }

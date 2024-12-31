@@ -1,14 +1,12 @@
 // Generated automatically by nearley, version 2.20.1
 // http://github.com/Hardmath123/nearley
-(function () {
 function id(x) { return x[0]; }
  
 function join(d) {
   return d.join('');
 }
-var grammar = {
-    Lexer: undefined,
-    ParserRules: [
+let Lexer = undefined;
+let ParserRules = [
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": function(d) {return null;}},
@@ -112,8 +110,8 @@ var grammar = {
     {"name": "attr_matcher$ebnf$1", "symbols": ["attr_matcher$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "attr_matcher$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "attr_matcher", "symbols": ["attr_matcher$ebnf$1", {"literal":"="}], "postprocess": join},
-    {"name": "attr_modifier", "symbols": [{"literal":"i"}], "postprocess": id},
-    {"name": "attr_modifier", "symbols": [{"literal":"s"}], "postprocess": id},
+    {"name": "attr_modifier", "symbols": [/[iI]/], "postprocess": () => 'i'},
+    {"name": "attr_modifier", "symbols": [/[sS]/], "postprocess": () => 's'},
     {"name": "string_or_ident", "symbols": ["string_token"], "postprocess": id},
     {"name": "string_or_ident", "symbols": ["ident_token"], "postprocess": id},
     {"name": "pseudo_class_selector", "symbols": [{"literal":":"}, "ident_token"], "postprocess": d => ({ type: 'pseudoSelector', name: d[1] })},
@@ -193,12 +191,6 @@ var grammar = {
     {"name": "escape", "symbols": [{"literal":"\\"}, "hex_digit", "escape$ebnf$1", "escape$ebnf$2", "escape$ebnf$3", "escape$ebnf$4", "escape$ebnf$5", "_"], "postprocess": d => d.slice(1).join('')},
     {"name": "hex_digit", "symbols": [/[0-9a-fA-F]/], "postprocess": id},
     {"name": "digit", "symbols": [/[0-9]/], "postprocess": id}
-]
-  , ParserStart: "selector_list"
-}
-if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
-   module.exports = grammar;
-} else {
-   window.grammar = grammar;
-}
-})();
+];
+let ParserStart = "selector_list";
+export default { Lexer, ParserRules, ParserStart };

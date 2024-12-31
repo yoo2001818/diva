@@ -1,4 +1,4 @@
-import { CSSLength } from '../cssom/dict';
+import { CSSColor, CSSLength } from '../cssom/dict';
 import { Box, LayoutBox } from './Box';
 import { StyleData } from './StyleData';
 
@@ -24,6 +24,22 @@ export function calcWidth(containingBox: Box, item: StyleData): number {
   }
 }
 
+export function calcHeight(containingBox: Box, item: StyleData): number | null {
+  const height = item.style._getRaw('height');
+  switch (height.type) {
+    case 'auto':
+      return null;
+    case 'inherit':
+      return 0;
+    case 'length':
+      return calcLength(height, item);
+    case 'percentage':
+      return containingBox.height * (height.value / 100);
+    default:
+      return null;
+  }
+}
+
 export function updateBoxStyles(box: LayoutBox, item: StyleData): void {
   box.border.top = item.computedStyle.getPx('borderTopWidth');
   box.border.left = item.computedStyle.getPx('borderLeftWidth');
@@ -37,6 +53,19 @@ export function updateBoxStyles(box: LayoutBox, item: StyleData): void {
   box.margin.left = item.computedStyle.getPx('marginLeft');
   box.margin.right = item.computedStyle.getPx('marginRight');
   box.margin.bottom = item.computedStyle.getPx('marginBottom');
+  box.background.color = item.computedStyle.get('backgroundColor') as CSSColor;
+  box.borderTopStyle.color = item.computedStyle.get(
+    'borderTopColor',
+  ) as CSSColor;
+  box.borderLeftStyle.color = item.computedStyle.get(
+    'borderLeftColor',
+  ) as CSSColor;
+  box.borderRightStyle.color = item.computedStyle.get(
+    'borderRightColor',
+  ) as CSSColor;
+  box.borderBottomStyle.color = item.computedStyle.get(
+    'borderBottomColor',
+  ) as CSSColor;
 }
 
 export function layoutBlocks(
@@ -48,21 +77,23 @@ export function layoutBlocks(
   const parentLeft = containingBox.left;
   const parentTop = containingBox.top;
   const setWidth = calcWidth(containingBox, item);
+  const setHeight = calcHeight(containingBox, item);
 
   let height = 0;
   const box = new LayoutBox();
   updateBoxStyles(box, item);
-  box.offsetLeft = parentLeft;
-  box.offsetTop = parentTop;
-  // Assuming border-box
-  box.contentWidth = setWidth - box.border.width - box.padding.width;
+  box.outerBox.left = parentLeft;
+  box.outerBox.top = parentTop;
+  box.outerBox.width = setWidth;
+  box.scrollBox.width = box.outerBox.width - box.border.width;
+  box.innerBox.width = box.contentWidth;
 
   children.forEach((child) => {
     // Pass a box with correct location, and parent height
     // TODO: Couldn't this just use a regular box?
     const childBox = new Box();
-    childBox.top = parentTop + box.border.top + box.padding.top + height;
-    childBox.left = parentLeft + box.border.left + box.padding.left;
+    childBox.top = box.padding.top + height;
+    childBox.left = box.padding.left;
     childBox.width = box.contentWidth;
     childBox.height = containingBox.height;
     child.layout(childBox);
@@ -70,7 +101,11 @@ export function layoutBlocks(
     height += childPrincipalBox.clientHeight + childPrincipalBox.margin.height;
   });
 
-  box.contentHeight = height;
+  box.innerBox.height = height + box.padding.height;
+  box.outerBox.height =
+    setHeight != null
+      ? setHeight
+      : height + box.border.height + box.padding.height;
 
   item.boxes[0] = box;
 }

@@ -1,6 +1,6 @@
 import type { Element } from '../dom/Element';
 import type { Node } from '../dom/Node';
-import { Box, LayoutBox, Spacing } from './Box';
+import { Box, LayoutBox } from './Box';
 import { layoutBlocks } from './FormattingContext';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { ComputedStyle } from './ComputedStyle';

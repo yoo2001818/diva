@@ -32,14 +32,17 @@ export class BackgroundStyle {
 }
 
 export class LayoutBox {
-  outsideBox: Box = new Box();
-  insideBox: Box = new Box();
-  offsetTop: number = 0;
-  offsetLeft: number = 0;
+  // Box seen by the outside node (border box)
+  outerBox: Box = new Box();
+  // Box of the scrolling area (excluding scrollbars)
+  scrollBox: Box = new Box();
+  // Box of the content inside the scroll box (padding box)
+  innerBox: Box = new Box();
   scrollTop: number = 0;
   scrollLeft: number = 0;
   margin: Spacing = new Spacing();
   border: Spacing = new Spacing();
+  padding: Spacing = new Spacing();
   borderTopStyle: BorderStyle = new BorderStyle();
   borderRightStyle: BorderStyle = new BorderStyle();
   borderBottomStyle: BorderStyle = new BorderStyle();
@@ -49,11 +52,19 @@ export class LayoutBox {
   // Contents intrinsic to the node, e.g. background, color, border,
   // are described here
   get clientWidth(): number {
-    return this.outsideBox.width;
+    return this.outerBox.width;
   }
 
   get clientHeight(): number {
-    return this.outsideBox.height;
+    return this.outerBox.height;
+  }
+
+  get contentWidth(): number {
+    return this.scrollBox.width - this.padding.width;
+  }
+
+  get contentHeight(): number {
+    return this.scrollBox.height - this.padding.height;
   }
 }
 

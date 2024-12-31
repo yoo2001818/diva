@@ -1,4 +1,5 @@
 # https://www.w3.org/TR/selectors-4/
+@preprocessor esmodule
 @builtin "whitespace.ne"
 @{% 
 function join(d) {

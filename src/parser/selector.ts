@@ -1,4 +1,4 @@
-import selectorGrammar from './selectorGrammar.cjs';
+import selectorGrammar from './selectorGrammar.js';
 import nearley from 'nearley';
 
 const grammar = nearley.Grammar.fromCompiled(selectorGrammar);
@@ -20,9 +20,7 @@ export interface ComplexSelector {
   children: ComplexSelectorChild[];
 }
 
-export type ComplexSelectorChild =
-  | Combinator
-  | CompoundSelector;
+export type ComplexSelectorChild = Combinator | CompoundSelector;
 
 export interface CompoundSelector {
   type: 'compoundSelector';
