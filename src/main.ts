@@ -26,6 +26,15 @@ for (let i = 0; i < 10; i += 1) {
 
 doc.documentElement!.append(container);
 
+const container2 = doc.createElement('div');
+container2.className = 'container2';
+container2.style.background = '#ffff77';
+container2.style.margin = '5px';
+container2.style.padding = '5px';
+container2.appendChild(doc.createTextNode('Hello, world!'));
+
+doc.documentElement!.append(container2);
+
 renderer.layout();
 renderer.render();
 

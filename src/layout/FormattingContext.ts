@@ -7,12 +7,11 @@ export function calcLength(value: CSSLength, _item: StyleData): number {
   return value.value;
 }
 
-export function calcWidth(containingBox: Box, item: StyleData): number {
+export function calcWidth(containingBox: Box, item: StyleData): number | null {
   const width = item.style._getRaw('width');
   switch (width.type) {
     case 'auto':
-      // Well, we can't do anything yet
-      return containingBox.width;
+      return null;
     case 'inherit':
       return 0;
     case 'length':
@@ -80,11 +79,12 @@ export function layoutBlocks(
   const setHeight = calcHeight(containingBox, item);
 
   let height = 0;
+  let prevMarginBottom = 0;
   const box = new LayoutBox();
   updateBoxStyles(box, item);
-  box.outerBox.left = parentLeft;
-  box.outerBox.top = parentTop;
-  box.outerBox.width = setWidth;
+  box.outerBox.left = parentLeft + box.margin.left;
+  box.outerBox.top = parentTop + box.margin.top;
+  box.outerBox.width = setWidth ?? containingBox.width - box.margin.width;
   box.scrollBox.width = box.outerBox.width - box.border.width;
   box.innerBox.width = box.contentWidth;
 
@@ -98,7 +98,16 @@ export function layoutBlocks(
     childBox.height = containingBox.height;
     child.layout(childBox);
     const childPrincipalBox = child.principalBox;
-    height += childPrincipalBox.clientHeight + childPrincipalBox.margin.height;
+    const shiftedHeight = Math.min(
+      prevMarginBottom,
+      childPrincipalBox.margin.top,
+    );
+    childPrincipalBox.outerBox.top -= shiftedHeight;
+    prevMarginBottom = childPrincipalBox.margin.bottom;
+    height +=
+      childPrincipalBox.clientHeight +
+      childPrincipalBox.margin.height -
+      shiftedHeight;
   });
 
   box.innerBox.height = height + box.padding.height;
