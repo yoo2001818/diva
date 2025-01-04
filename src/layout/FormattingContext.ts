@@ -118,3 +118,14 @@ export function layoutBlocks(
 
   item.boxes[0] = box;
 }
+
+export function layoutInlines(
+  containingBox: Box,
+  item: StyleData,
+  children: StyleData[],
+): void {
+  // Anonymous "line blocks" are created whenever inline elements are directly
+  // placed under block. Currently the model doesn't have a structure to
+  // represent that; Perhaps the StyleData could define "virtualParent" property
+  // or something like that.
+}
