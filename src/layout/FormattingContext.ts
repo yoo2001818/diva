@@ -91,6 +91,8 @@ export function layoutBlocks(
   children.forEach((child) => {
     // Pass a box with correct location, and parent height
     // TODO: Couldn't this just use a regular box?
+    // TODO: If the child uses inline context, we must create empty
+    // line box and use that for inline layouts
     const childBox = new Box();
     childBox.top = box.padding.top + height;
     childBox.left = box.padding.left;
