@@ -40,6 +40,7 @@ export class StyleData {
     const display = this.computedStyle.get('display');
     switch (display.type) {
       case 'inline':
+        // Determine if there is a line box nearby, and create one if it doesn't?
         layoutInlines(containingBox, this, this.children);
         break;
       case 'block':
