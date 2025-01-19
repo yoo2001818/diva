@@ -1,7 +1,7 @@
 import type { Element } from '../dom/Element';
 import type { Node } from '../dom/Node';
 import { Box, LayoutBox } from './Box';
-import { layoutBlocks, layoutInlines } from './FormattingContext';
+import { layoutBlocks } from './FormattingContext';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { ComputedStyle } from './ComputedStyle';
 
@@ -37,16 +37,6 @@ export class StyleData {
   }
 
   layout(containingBox: Box): void {
-    const display = this.computedStyle.get('display');
-    switch (display.type) {
-      case 'inline':
-        // Determine if there is a line box nearby, and create one if it doesn't?
-        layoutInlines(containingBox, this, this.children);
-        break;
-      case 'block':
-      default:
-        layoutBlocks(containingBox, this, this.children);
-        break;
-    }
+    layoutBlocks(containingBox, this, this.children);
   }
 }

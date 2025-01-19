@@ -1,5 +1,6 @@
 import { CSSColor, CSSLength } from '../cssom/dict';
 import { Box, LayoutBox } from './Box';
+import { InlineFormattingContext } from './InlineFormattingContext';
 import { StyleData } from './StyleData';
 
 export function calcLength(value: CSSLength, _item: StyleData): number {
@@ -67,6 +68,10 @@ export function updateBoxStyles(box: LayoutBox, item: StyleData): void {
   ) as CSSColor;
 }
 
+function isInline(item: StyleData): boolean {
+  return item.computedStyle.get('display').type === 'inline';
+}
+
 export function layoutBlocks(
   containingBox: Box,
   item: StyleData,
@@ -88,29 +93,46 @@ export function layoutBlocks(
   box.scrollBox.width = box.outerBox.width - box.border.width;
   box.innerBox.width = box.contentWidth;
 
-  children.forEach((child) => {
+  function getChildBox(): Box {
     // Pass a box with correct location, and parent height
-    // TODO: Couldn't this just use a regular box?
-    // TODO: If the child uses inline context, we must create empty
-    // line box and use that for inline layouts
     const childBox = new Box();
     childBox.top = box.padding.top + height;
     childBox.left = box.padding.left;
     childBox.width = box.contentWidth;
     childBox.height = containingBox.height;
-    child.layout(childBox);
-    const childPrincipalBox = child.principalBox;
-    const shiftedHeight = Math.min(
-      prevMarginBottom,
-      childPrincipalBox.margin.top,
-    );
-    childPrincipalBox.outerBox.top -= shiftedHeight;
-    prevMarginBottom = childPrincipalBox.margin.bottom;
-    height +=
-      childPrincipalBox.clientHeight +
-      childPrincipalBox.margin.height -
-      shiftedHeight;
-  });
+    return childBox;
+  }
+  function finalizeChild(box: LayoutBox): void {
+    const shiftedHeight = Math.min(prevMarginBottom, box.margin.top);
+    box.outerBox.top -= shiftedHeight;
+    prevMarginBottom = box.margin.bottom;
+    height += box.clientHeight + box.margin.height - shiftedHeight;
+  }
+
+  let inlineContext: InlineFormattingContext | null = null;
+
+  for (const child of children) {
+    if (isInline(child)) {
+      if (inlineContext == null) {
+        inlineContext = new InlineFormattingContext(getChildBox());
+      }
+      inlineContext.feed(child);
+    } else {
+      if (inlineContext != null) {
+        inlineContext.finalize();
+        inlineContext.lineBoxes.forEach((box) => finalizeChild(box));
+        inlineContext = null;
+      }
+      child.layout(getChildBox());
+      finalizeChild(child.principalBox);
+    }
+  }
+
+  if (inlineContext != null) {
+    inlineContext.finalize();
+    inlineContext.lineBoxes.forEach((box) => finalizeChild(box));
+    inlineContext = null;
+  }
 
   box.innerBox.height = height + box.padding.height;
   box.outerBox.height =
@@ -119,26 +141,4 @@ export function layoutBlocks(
       : height + box.border.height + box.padding.height;
 
   item.boxes[0] = box;
-}
-
-export function layoutInlines(
-  containingBox: Box,
-  item: StyleData,
-  children: StyleData[],
-): void {
-  // Anonymous "line blocks" are created whenever inline elements are directly
-  // placed under block. Currently the model doesn't have a structure to
-  // represent that; Perhaps the StyleData could define "virtualParent" property
-  // or something like that.
-  // Let's assume that the parent is the container, and plan out what to do:
-  // 1. Initially, it would need to check what elements (and text) reside in
-  //    the same line. In other words, each bounds of each node is determined
-  //    and "chopped up" to each lines. This must include all the children,
-  //    including grandchildren to calculate it. In other words, just like how
-  //    a text render would do (it is!) It must traverse the node in-order and
-  //    lay out the text and the nodes.
-  // 2. After a line is finished, the vertical height of the line will be
-  //    calculated. Text baseline and other heights are calculated using the
-  //    font, and other nodes are lined up to match that. After the height is
-  //    calculated, the nodes are placed according to the line.
 }
