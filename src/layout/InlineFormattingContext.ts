@@ -24,6 +24,8 @@ export class InlineFormattingContext {
     const lineBox = new Box();
     lineBox.width = this.containingBox.width;
     // FIXME: inline-in-inline nodes must be dealt differently
+    // FIXME: What about text nodes? Since StyleData means Element only, there
+    // is no way to indicate text nodes
     item.layout(lineBox);
     const box = item.principalBox;
     let currentLine = this.lines[this.lines.length - 1];
