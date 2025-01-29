@@ -1,5 +1,5 @@
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
-import { CSSLength, CSSStyleDict } from '../cssom/dict';
+import { CSSKeyword, CSSLength, CSSStyleDict } from '../cssom/dict';
 import { Element } from '../dom/Element';
 
 export class ComputedStyle {
@@ -55,7 +55,7 @@ export class ComputedStyle {
     }
   }
 
-  get<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K] {
+  get<K extends keyof CSSStyleDict>(key: K): Exclude<CSSStyleDict[K], CSSKeyword<'inherit'>> {
     const value = this.style._getRaw(key);
     if (!Array.isArray(value)) {
       if (value.type === 'inherit') {
@@ -102,5 +102,9 @@ export class ComputedStyle {
   getPx(key: keyof CSSStyleDict): number {
     // FIXME: This is not workable
     return (this.get(key) as CSSLength).value;
+  }
+
+  update(): void {
+    // TODO: Implement caching the style...
   }
 }
