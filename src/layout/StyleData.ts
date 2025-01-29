@@ -1,14 +1,13 @@
 import type { Element } from '../dom/Element';
-import type { Node } from '../dom/Node';
 import { Box, LayoutBox } from './Box';
 import { layoutBlocks } from './FormattingContext';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { ComputedStyle } from './ComputedStyle';
 
 export class StyleData {
-  node: Node;
-  style: CSSStyleDeclaration = new CSSStyleDeclaration();
-  computedStyle: ComputedStyle = new ComputedStyle(this);
+  node: Element;
+  style: CSSStyleDeclaration;
+  computedStyle: ComputedStyle;
 
   // Each box will contain all properties necessary to render the node
   // (to allow pseudo and inline elements)
@@ -20,8 +19,10 @@ export class StyleData {
 
   offsetParent: Element | null = null;
 
-  constructor(node: Node) {
+  constructor(node: Element) {
     this.node = node;
+    this.computedStyle = node._computedStyle;
+    this.style = node._computedStyle.style;
   }
 
   get children(): StyleData[] {

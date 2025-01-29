@@ -1,4 +1,5 @@
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
+import { ComputedStyle } from '../layout/ComputedStyle';
 import { StyleData } from '../layout/StyleData';
 import { parseHtml } from '../parser/html';
 import { ComplexSelector, parseSelectors } from '../parser/selector';
@@ -35,18 +36,19 @@ import { matchSelector } from './utils/selector';
 
 export class Element
   extends Node
-  implements ParentNode, ChildNode, NonDocumentTypeChildNode
-{
+  implements ParentNode, ChildNode, NonDocumentTypeChildNode {
   _tagName: string;
   _id: string = '';
   _classList: DOMTokenList = new DOMTokenList();
   _slot: string = '';
   _attributes: NamedNodeMap = new NamedNodeMap(this);
   _styleData: unknown;
+  _computedStyle: ComputedStyle;
 
   constructor(document: Document, tagName: string) {
     super(document);
     this._tagName = tagName.toUpperCase();
+    this._computedStyle = new ComputedStyle(this);
   }
 
   get nodeType(): number {
@@ -448,6 +450,6 @@ export class Element
   }
 
   get style(): CSSStyleDeclaration {
-    return this.styleData.style;
+    return this._computedStyle.style;
   }
 }

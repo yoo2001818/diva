@@ -1,10 +1,13 @@
+import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { CSSLength, CSSStyleDict } from '../cssom/dict';
-import type { StyleData } from './StyleData';
+import { Element } from '../dom/Element';
 
 export class ComputedStyle {
-  styleData: StyleData;
-  constructor(styleData: StyleData) {
-    this.styleData = styleData;
+  element: Element;
+  style: CSSStyleDeclaration = new CSSStyleDeclaration();
+
+  constructor(element: Element) {
+    this.element = element;
   }
 
   /**
@@ -12,12 +15,12 @@ export class ComputedStyle {
    */
   getFontSize(): number {
     const fontSize = this.get('fontSize');
-    const parent = this.styleData.node.parentElement!;
+    const parent = this.element.parentElement!;
     switch (fontSize.type) {
       case 'length':
         switch (fontSize.unit) {
           case 'em': {
-            const parentFontSize = parent.styleData.computedStyle.getFontSize();
+            const parentFontSize = parent._computedStyle.getFontSize();
             return parentFontSize * fontSize.value;
           }
           case 'cm':
@@ -33,7 +36,7 @@ export class ComputedStyle {
             return fontSize.value;
         }
       case 'percentage': {
-        const parentFontSize = parent.styleData.computedStyle.getFontSize();
+        const parentFontSize = parent._computedStyle.getFontSize();
         return parentFontSize * fontSize.value;
       }
       case 'xx-small':
@@ -53,11 +56,11 @@ export class ComputedStyle {
   }
 
   get<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K] {
-    const value = this.styleData.style._getRaw(key);
+    const value = this.style._getRaw(key);
     if (!Array.isArray(value)) {
       if (value.type === 'inherit') {
-        const parent = this.styleData.node.parentElement!;
-        return parent.styleData.computedStyle.get(key);
+        const parent = this.element.parentElement!;
+        return parent._computedStyle.get(key);
       }
       if (key !== 'fontSize' && value.type === 'length') {
         const length = value as CSSLength;
@@ -84,7 +87,7 @@ export class ComputedStyle {
         }
       }
       if (key !== 'fontSize' && value.type === 'percentage') {
-        const parent = this.styleData.node.parentElement!;
+        const parent = this.element.parentElement!;
         const contentWidth = parent.styleData.principalBox.contentWidth;
         return {
           type: 'length',
