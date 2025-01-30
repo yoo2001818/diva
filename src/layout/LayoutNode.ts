@@ -35,4 +35,8 @@ export abstract class LayoutNode {
   isBlock(): boolean {
     return false;
   }
+
+  isInline(): boolean {
+    return false;
+  }
 }
