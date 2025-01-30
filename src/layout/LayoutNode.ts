@@ -25,10 +25,14 @@ export abstract class LayoutNode {
   /**
    * Constructs the layout tree.
    */
-  construct(): void { }
+  construct(): void {}
 
   /**
    * Calculate layouts for the layout tree.
    */
-  layout(): void { }
+  layout(): void {}
+
+  isBlock(): boolean {
+    return false;
+  }
 }
