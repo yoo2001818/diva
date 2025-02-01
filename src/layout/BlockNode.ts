@@ -27,9 +27,7 @@ export class BlockNode extends LayoutNode {
           inlineBox = new InlineBoxNode(this.node);
           this.children.push(inlineBox);
         }
-        inlineBox.appendChild(layoutNode);
-        layoutNode.resolveStyle();
-        layoutNode.construct();
+        inlineBox.feed(layoutNode);
       }
       node = node.nextSibling;
     }
