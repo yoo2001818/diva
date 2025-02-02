@@ -33,6 +33,8 @@ export class BlockNode extends LayoutNode {
     }
   }
 
+  layout(): void {}
+
   isBlock(): boolean {
     return true;
   }

@@ -1,13 +1,16 @@
 import { Element } from '../dom/Element';
 import { Node } from '../dom/Node';
+import { LayoutBox } from './Box';
 import { ComputedStyle } from './ComputedStyle';
 
 export abstract class LayoutNode {
   node: Node | null = null;
   computedStyle: ComputedStyle | null = null;
+  box: LayoutBox;
 
   constructor(node: Node | null) {
     this.node = node;
+    this.box = new LayoutBox();
   }
 
   /**
