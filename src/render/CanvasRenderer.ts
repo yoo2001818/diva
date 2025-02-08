@@ -1,15 +1,19 @@
 import { Document } from '../dom/Document';
+import { BlockNode } from '../layout/BlockNode';
 import { Box } from '../layout/Box';
+import { LayoutNode } from '../layout/LayoutNode';
 import { StyleData } from '../layout/StyleData';
 import { mapColor } from './color';
 
 export class CanvasRenderer {
   doc: Document;
+  layoutNode: LayoutNode;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
 
   constructor(doc: Document, canvas: HTMLCanvasElement) {
     this.doc = doc;
+    this.layoutNode = new BlockNode(this.doc.firstElementChild!);
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
   }
