@@ -7,11 +7,13 @@ export type CSSStyleDeclaration = {
 } & {
   _getRaw<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K];
   _setRaw<K extends keyof CSSStyleDict>(key: K, value: CSSStyleDict[K]): void;
+  _onUpdate: (() => void) | null;
   cssText: string;
 };
 
 class CSSStyleDeclarationImpl {
   _dict: Partial<CSSStyleDict>;
+  _onUpdate: (() => void) | null = null;
   constructor() {
     this._dict = {};
   }
@@ -20,6 +22,7 @@ class CSSStyleDeclarationImpl {
   }
   _setRaw<K extends keyof CSSStyleDict>(key: K, value: CSSStyleDict[K]): void {
     this._dict[key] = value;
+    this._onUpdate?.();
   }
   get cssText(): string {
     const result: string[] = [];
@@ -28,6 +31,9 @@ class CSSStyleDeclarationImpl {
       result.push(kebabize(key) + ':' + value + ';');
     }
     return result.join(' ');
+  }
+  set cssText(value: string) {
+    // TODO
   }
 }
 
@@ -38,6 +44,7 @@ Object.entries(schema).forEach(([key, { get, set }]) => {
     },
     set(v) {
       set(this._dict, v);
+      this._onUpdate?.();
     },
   });
 });

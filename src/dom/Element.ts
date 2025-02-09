@@ -36,7 +36,8 @@ import { matchSelector } from './utils/selector';
 
 export class Element
   extends Node
-  implements ParentNode, ChildNode, NonDocumentTypeChildNode {
+  implements ParentNode, ChildNode, NonDocumentTypeChildNode
+{
   _tagName: string;
   _id: string = '';
   _classList: DOMTokenList = new DOMTokenList();
@@ -49,6 +50,27 @@ export class Element
     super(document);
     this._tagName = tagName.toUpperCase();
     this._computedStyle = new ComputedStyle(this);
+    this._computedStyle.style._onUpdate = () => {
+      this._setAttributeInternal('style', this._computedStyle.style.cssText);
+    };
+    this._classList._onUpdate = () => {
+      this._setAttributeInternal('class', this._classList.value);
+    };
+    this._attributes._setHook('id', {
+      set: (value) => {
+        this.id = value ?? '';
+      },
+    });
+    this._attributes._setHook('class', {
+      set: (value) => {
+        this._classList.value = value ?? '';
+      },
+    });
+    this._attributes._setHook('style', {
+      set: (value) => {
+        this._computedStyle.style.cssText = value ?? '';
+      },
+    });
   }
 
   get nodeType(): number {
@@ -85,6 +107,7 @@ export class Element
 
   set id(value: string) {
     this._id = value;
+    this.setAttribute('id', this._id);
   }
 
   get className(): string {
@@ -127,6 +150,12 @@ export class Element
   getAttributeNS(namespace: string | null, localName: string): string | null {
     const item = this._attributes.getNamedItemNS(namespace, localName);
     return item != null ? item.value : null;
+  }
+
+  _setAttributeInternal(qualifiedName: string, value: string): void {
+    const item = this._document!.createAttribute(qualifiedName);
+    item.value = value;
+    this._attributes._setNamedItem(item, true);
   }
 
   setAttribute(qualifiedName: string, value: string): void {
@@ -293,18 +322,7 @@ export class Element
     parseHtml(value, this.ownerDocument!, this);
   }
 
-  // FIXME: This is just a temporary mechanism to update 'id', 'class', 'style'
-  // attributes while getting innerHTML/outerHTML. However, it needs to be
-  // dynamically updated whenever id/className/style values change, so this is
-  // not adequate.
-  _updateAttributes(): void {
-    this.setAttribute('id', this.id);
-    this.setAttribute('class', this.className);
-    this.setAttribute('style', this.style.cssText);
-  }
-
   get outerHTML(): string {
-    this._updateAttributes();
     let s = '';
     s += '<';
     s += this.tagName.toLowerCase();

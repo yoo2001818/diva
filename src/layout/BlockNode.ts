@@ -1,4 +1,4 @@
-import { createLayoutNode } from './createLayoutNode';
+import { createInlineBoxNode, createLayoutNode } from './createLayoutNode';
 import { InlineBoxNode } from './InlineBoxNode';
 import { LayoutNode } from './LayoutNode';
 
@@ -24,7 +24,7 @@ export class BlockNode extends LayoutNode {
         // If an inline node is encountered, aka the inline box needs to be
         // present, start one if not present.
         if (inlineBox == null) {
-          inlineBox = new InlineBoxNode(this.node);
+          inlineBox = createInlineBoxNode(this.node);
           this.children.push(inlineBox);
         }
         inlineBox.feed(layoutNode);

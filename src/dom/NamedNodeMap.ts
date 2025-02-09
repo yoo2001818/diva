@@ -1,12 +1,21 @@
 import { Attr } from './Attr';
 import { Element } from './Element';
 
+export interface NamedNodeMapHook {
+  set(value: string | null): void;
+}
+
 export class NamedNodeMap {
   _ownerElement: Element;
   _attributes: Attr[] = [];
+  _hooks: Record<string, NamedNodeMapHook> = {};
 
   constructor(ownerElement: Element) {
     this._ownerElement = ownerElement;
+  }
+
+  _setHook(name: string, hook: NamedNodeMapHook): void {
+    this._hooks[name] = hook;
   }
 
   get length(): number {
@@ -27,12 +36,15 @@ export class NamedNodeMap {
     return this.getNamedItem(localName);
   }
 
-  setNamedItem(attr: Attr): Attr | null {
+  _setNamedItem(attr: Attr, ignoreHook = false): Attr | null {
     if (
       attr._ownerElement != null &&
       attr._ownerElement !== this._ownerElement
     ) {
       throw new DOMException('Attr is in use', 'InUseAttributeError');
+    }
+    if (!ignoreHook) {
+      this._hooks[attr.name]?.set(attr.value);
     }
     const oldAttr = this.getNamedItem(attr.name);
     if (oldAttr === attr) {
@@ -54,8 +66,12 @@ export class NamedNodeMap {
     return oldAttr;
   }
 
+  setNamedItem(attr: Attr): Attr | null {
+    return this._setNamedItem(attr);
+  }
+
   setNamedItemNS(attr: Attr): Attr | null {
-    return this.setNamedItem(attr);
+    return this._setNamedItem(attr);
   }
 
   removeNamedItem(qualifiedName: string): Attr {
@@ -63,6 +79,7 @@ export class NamedNodeMap {
     if (attr == null) {
       throw new DOMException('Cannot find attribute', 'DOMException');
     }
+    this._hooks[qualifiedName]?.set(null);
     const index = attr._parentIndex!;
     attr._ownerElement = null;
     attr._parentIndex = null;

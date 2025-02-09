@@ -1,19 +1,20 @@
 import { Document } from '../dom/Document';
-import { BlockNode } from '../layout/BlockNode';
+// import { BlockNode } from '../layout/BlockNode';
 import { Box } from '../layout/Box';
-import { LayoutNode } from '../layout/LayoutNode';
+// import { LayoutNode } from '../layout/LayoutNode';
 import { StyleData } from '../layout/StyleData';
 import { mapColor } from './color';
 
 export class CanvasRenderer {
   doc: Document;
-  layoutNode: LayoutNode;
+  // TOOD: Need to deal with cyclic imports first
+  // layoutNode: LayoutNode;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
 
   constructor(doc: Document, canvas: HTMLCanvasElement) {
     this.doc = doc;
-    this.layoutNode = new BlockNode(this.doc.firstElementChild!);
+    // this.layoutNode = new BlockNode(this.doc.firstElementChild!);
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
   }

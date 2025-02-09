@@ -35,6 +35,8 @@ container2.appendChild(doc.createTextNode('Hello, world!'));
 
 doc.documentElement!.append(container2);
 
+console.log(doc.documentElement?.innerHTML);
+
 renderer.layout();
 renderer.render();
 

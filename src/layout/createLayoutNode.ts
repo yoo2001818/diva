@@ -3,6 +3,7 @@ import { Node } from '../dom/Node';
 import { Text } from '../dom/Text';
 import { BlockNode } from './BlockNode';
 import { InlineBlockNode } from './InlineBlockNode';
+import { InlineBoxNode } from './InlineBoxNode';
 import { InlineNode } from './InlineNode';
 import { LayoutNode } from './LayoutNode';
 import { TextRunNode } from './TextRunNode';
@@ -25,4 +26,8 @@ export function createLayoutNode(node: Node): LayoutNode | null {
     return new TextRunNode(node, node.data);
   }
   return null;
+}
+
+export function createInlineBoxNode(node: Node | null): InlineBoxNode {
+  return new InlineBoxNode(node);
 }

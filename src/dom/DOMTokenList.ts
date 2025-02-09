@@ -1,5 +1,6 @@
 export class DOMTokenList {
   private _tokens: string[] = [];
+  _onUpdate: (() => void) | null = null;
 
   get length(): number {
     return this._tokens.length;
@@ -14,7 +15,7 @@ export class DOMTokenList {
   }
 
   _handleUpdate(): void {
-    // TODO
+    this._onUpdate?.();
   }
 
   _validateToken(token: string): void {
