@@ -1,9 +1,9 @@
 import { CSSStyleDict, INITIAL_VALUES } from './dict';
-import { schema } from './schema';
+import { CSSSchemaKeys, CSSSchemaKeysKebab, schema } from './schema';
 import { kebabize } from './utils';
 
 export type CSSStyleDeclaration = {
-  [K in keyof typeof schema]: string;
+  [K in CSSSchemaKeys | CSSSchemaKeysKebab]: string;
 } & {
   _getRaw<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K];
   _setRaw<K extends keyof CSSStyleDict>(key: K, value: CSSStyleDict[K]): void;
@@ -39,6 +39,15 @@ class CSSStyleDeclarationImpl {
 
 Object.entries(schema).forEach(([key, { get, set }]) => {
   Object.defineProperty(CSSStyleDeclarationImpl.prototype, key, {
+    get() {
+      return get(this._dict);
+    },
+    set(v) {
+      set(this._dict, v);
+      this._onUpdate?.();
+    },
+  });
+  Object.defineProperty(CSSStyleDeclarationImpl.prototype, kebabize(key), {
     get() {
       return get(this._dict);
     },
