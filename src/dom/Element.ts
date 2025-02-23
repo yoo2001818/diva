@@ -58,7 +58,7 @@ export class Element
     };
     this._attributes._setHook('id', {
       set: (value) => {
-        this.id = value ?? '';
+        this._id = value ?? '';
       },
     });
     this._attributes._setHook('class', {

@@ -16,6 +16,7 @@ import {
   stringifySize,
   stringifyUrl,
 } from './stringify';
+import { kebabize } from './utils';
 
 export interface CSSSchemaEntry {
   get(dict: CSSStyleDict): string;
@@ -598,3 +599,7 @@ type Kebab<
   ? Kebab<R, `${A}${F extends Lowercase<F> ? '' : '-'}${Lowercase<F>}`>
   : A;
 export type CSSSchemaKeysKebab = Kebab<CSSSchemaKeys>;
+
+export const schemaKebab = Object.fromEntries(
+  Object.entries(schema).map(([key, value]) => [kebabize(key), value]),
+);

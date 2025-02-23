@@ -1,5 +1,11 @@
+import { CSSRule } from './CSSRule';
 import { CSSStyleDict, INITIAL_VALUES } from './dict';
-import { CSSSchemaKeys, CSSSchemaKeysKebab, schema } from './schema';
+import {
+  CSSSchemaKeys,
+  CSSSchemaKeysKebab,
+  schema,
+  schemaKebab,
+} from './schema';
 import { kebabize } from './utils';
 
 export type CSSStyleDeclaration = {
@@ -9,6 +15,13 @@ export type CSSStyleDeclaration = {
   _setRaw<K extends keyof CSSStyleDict>(key: K, value: CSSStyleDict[K]): void;
   _onUpdate: (() => void) | null;
   cssText: string;
+  // length: number;
+  // item(index: number): string; This is an array?
+  getPropertyValue(property: string): string;
+  getPropertyPriority(property: string): string;
+  setProperty(property: string, value: string, priority?: string): void;
+  removeProperty(property: string): string;
+  parentRule: CSSRule | null;
 };
 
 class CSSStyleDeclarationImpl {
@@ -35,9 +48,34 @@ class CSSStyleDeclarationImpl {
   set cssText(value: string) {
     // TODO
   }
+  getPropertyValue(property: string): string {
+    const item = schemaKebab[property];
+    if (item != null) {
+      return item.get(this._dict as CSSStyleDict);
+    }
+    return '';
+  }
+  getPropertyPriority(_property: string): string {
+    return '';
+  }
+  setProperty(property: string, value: string, _priority?: string): void {
+    const item = schemaKebab[property];
+    if (item != null) {
+      item.set(this._dict as CSSStyleDict, value);
+    }
+  }
+  removeProperty(property: string): string {
+    const value = this.getPropertyValue(property);
+    const item = schemaKebab[property];
+    if (item != null) {
+      item.set(this._dict as CSSStyleDict, '');
+    }
+    return value;
+  }
 }
 
 Object.entries(schema).forEach(([key, { get, set }]) => {
+  const kebabKey = kebabize(key);
   Object.defineProperty(CSSStyleDeclarationImpl.prototype, key, {
     get() {
       return get(this._dict);
@@ -47,15 +85,17 @@ Object.entries(schema).forEach(([key, { get, set }]) => {
       this._onUpdate?.();
     },
   });
-  Object.defineProperty(CSSStyleDeclarationImpl.prototype, kebabize(key), {
-    get() {
-      return get(this._dict);
-    },
-    set(v) {
-      set(this._dict, v);
-      this._onUpdate?.();
-    },
-  });
+  if (key !== kebabKey) {
+    Object.defineProperty(CSSStyleDeclarationImpl.prototype, kebabKey, {
+      get() {
+        return get(this._dict);
+      },
+      set(v) {
+        set(this._dict, v);
+        this._onUpdate?.();
+      },
+    });
+  }
 });
 
 interface CSSStyleDeclarationConstructor {
