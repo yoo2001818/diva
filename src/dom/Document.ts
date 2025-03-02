@@ -1,3 +1,4 @@
+import { StyleSheetList } from '../cssom/StyleSheetList';
 import { Attr } from './Attr';
 import { CDATASection } from './CDATASection';
 import { ChildNode } from './ChildNode';
@@ -29,9 +30,12 @@ export class Document
   extends Node
   implements ParentNode, ChildNode, NonElementParentNode
 {
+  _styleSheets: StyleSheetList;
+
   constructor() {
     super(null);
     this._document = this;
+    this._styleSheets = new StyleSheetList();
     this.appendChild(this.createElement('html'));
   }
 
@@ -240,5 +244,9 @@ export class Document
 
   getElementById(elementId: string): Element | null {
     return elementGetElementById(this, elementId);
+  }
+
+  get styleSheets(): StyleSheetList {
+    return this._styleSheets;
   }
 }
