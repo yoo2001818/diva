@@ -249,4 +249,68 @@ export class Document
   get styleSheets(): StyleSheetList {
     return this._styleSheets;
   }
+
+  static parseHTMLUnsafe(html: string): Document {
+    throw new Error('Not implemented');
+  }
+
+  get location(): Location {
+    throw new Error('Not implemented');
+  }
+
+  get domain(): string {
+    throw new Error('Not implemented');
+  }
+
+  set domain(value: string) {
+    throw new Error('Not implemented');
+  }
+
+  get referrer(): string {
+    throw new Error('Not implemented');
+  }
+
+  get cookie(): string {
+    throw new Error('Not implemented');
+  }
+
+  set cookie(value: string) {
+    throw new Error('Not implemented');
+  }
+
+  get lastModified(): string {
+    throw new Error('Not implemented');
+  }
+
+  get readyState(): string {
+    throw new Error('Not implemented');
+  }
+
+  get title(): string {
+    throw new Error('Not implemented');
+  }
+
+  set title(value: string) {
+    throw new Error('Not implemented');
+  }
+
+  get dir(): string {
+    throw new Error('Not implemented');
+  }
+
+  set dir(value: string) {
+    throw new Error('Not implemented');
+  }
+
+  get body(): Element | null {
+    throw new Error('Not implemented');
+  }
+
+  set body(value: Element | null) {
+    throw new Error('Not implemented');
+  }
+
+  get head(): Element | null {
+    throw new Error('Not implemented');
+  }
 }
