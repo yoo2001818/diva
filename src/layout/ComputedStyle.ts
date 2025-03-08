@@ -1,5 +1,7 @@
+import { CSSStyleRule } from '../cssom/CSSRule';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { CSSKeyword, CSSLength, CSSStyleDict } from '../cssom/dict';
+import { Document } from '../dom/Document';
 import { Element } from '../dom/Element';
 
 export class ComputedStyle {
@@ -55,7 +57,22 @@ export class ComputedStyle {
     }
   }
 
-  get<K extends keyof CSSStyleDict>(key: K): Exclude<CSSStyleDict[K], CSSKeyword<'inherit'>> {
+  _getRaw(key: any) {
+    const styleSheets = this.element.ownerDocument!.styleSheets;
+    for (const sheet of styleSheets) {
+      for (const rule of sheet.cssRules) {
+        if (rule instanceof CSSStyleRule) {
+          if (this.element.matches(rule.selectorText)) {
+            // ??
+          }
+        }
+      }
+    }
+  }
+
+  get<K extends keyof CSSStyleDict>(
+    key: K,
+  ): Exclude<CSSStyleDict[K], CSSKeyword<'inherit'>> {
     const value = this.style._getRaw(key);
     if (!Array.isArray(value)) {
       if (value.type === 'inherit') {
