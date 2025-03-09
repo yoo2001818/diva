@@ -63,7 +63,7 @@ export class ComputedStyle {
       for (const rule of sheet.cssRules) {
         if (rule instanceof CSSStyleRule) {
           if (this.element.matches(rule.selectorText)) {
-            // ??
+            // Parse the selector, retrieve specificity
           }
         }
       }
