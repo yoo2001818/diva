@@ -105,7 +105,7 @@ function getCombinatorCandidates(
   }
 }
 
-function matchComplexSelector(
+export function matchComplexSelector(
   element: Element,
   selector: ComplexSelector,
 ): boolean {
@@ -138,6 +138,37 @@ function matchComplexSelector(
     }
   }
   return true;
+}
+
+export function getComplexSelectorSpecificity(
+  selector: ComplexSelector,
+): number {
+  const children = selector.children;
+  let specificity = 0;
+  for (let i = 0; i < children.length; i += 2) {
+    const selector = children[i] as CompoundSelector;
+    for (const simple of selector.children) {
+      // FIXME: This is not in spec (specificity is not a single number to begin with)
+      switch (simple.type) {
+        case 'attributeSelector':
+          specificity += 100;
+          break;
+        case 'classSelector':
+          specificity += 100;
+          break;
+        case 'idSelector':
+          specificity += 1000;
+          break;
+        case 'pseudoSelector':
+          specificity += 10;
+          break;
+        case 'typeSelector':
+          specificity += 10;
+          break;
+      }
+    }
+  }
+  return specificity;
 }
 
 export function matchSelector(

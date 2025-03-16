@@ -1,3 +1,7 @@
+import {
+  getComplexSelectorSpecificity,
+  matchComplexSelector,
+} from '../dom/utils/selector';
 import { HTMLElement } from '../html/HTMLElement';
 import { parseSelectors } from '../parser/selector';
 
@@ -11,5 +15,16 @@ export function getSpecificity(
   element: HTMLElement,
   selectorText: string,
 ): number {
-  const selector = parseSelectors(selectorText);
+  const selectors = parseSelectors(selectorText);
+  // We just need to know WHICH rule is selected
+  let specificity = 0;
+  for (const selector of selectors) {
+    if (matchComplexSelector(element, selector)) {
+      const current = getComplexSelectorSpecificity(selector);
+      if (current > specificity) {
+        specificity = current;
+      }
+    }
+  }
+  return specificity;
 }
