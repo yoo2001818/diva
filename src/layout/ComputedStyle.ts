@@ -1,6 +1,7 @@
 import { CSSStyleRule } from '../cssom/CSSRule';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { CSSKeyword, CSSLength, CSSStyleDict } from '../cssom/dict';
+import { getSpecificity } from '../cssom/utils';
 import { Document } from '../dom/Document';
 import { Element } from '../dom/Element';
 
@@ -58,12 +59,15 @@ export class ComputedStyle {
   }
 
   _getRaw(key: any) {
+    const rules: { rule: CSSStyleRule; specificity: number }[] = [];
     const styleSheets = this.element.ownerDocument!.styleSheets;
     for (const sheet of styleSheets) {
       for (const rule of sheet.cssRules) {
         if (rule instanceof CSSStyleRule) {
           if (this.element.matches(rule.selectorText)) {
             // Parse the selector, retrieve specificity
+            const specificity = getSpecificity(this.element, rule.selectorText);
+            rules.push({ rule, specificity });
           }
         }
       }
