@@ -2,7 +2,6 @@ import { CSSStyleRule } from '../cssom/CSSRule';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { CSSKeyword, CSSLength, CSSStyleDict } from '../cssom/dict';
 import { getSpecificity } from '../cssom/utils';
-import { Document } from '../dom/Document';
 import { Element } from '../dom/Element';
 
 export class ComputedStyle {
@@ -70,6 +69,14 @@ export class ComputedStyle {
             rules.push({ rule, specificity });
           }
         }
+      }
+    }
+    rules.sort((a, b) => b.specificity - a.specificity);
+    for (const { rule } of rules) {
+      // FIXME: _getRaw always returns a valid value by default
+      const result = rule.style._getRaw(key);
+      if (result != null) {
+        return result;
       }
     }
   }
