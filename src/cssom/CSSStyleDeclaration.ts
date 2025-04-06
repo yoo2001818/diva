@@ -1,5 +1,5 @@
 import { CSSRule } from './CSSRule';
-import { CSSStyleDict, INITIAL_VALUES } from './dict';
+import { CSSStyleDict } from './dict';
 import {
   CSSSchemaKeys,
   CSSSchemaKeysKebab,
@@ -11,7 +11,7 @@ import { kebabize } from './utils';
 export type CSSStyleDeclaration = {
   [K in CSSSchemaKeys | CSSSchemaKeysKebab]: string;
 } & {
-  _getRaw<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K];
+  _getRaw<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K] | null;
   _setRaw<K extends keyof CSSStyleDict>(key: K, value: CSSStyleDict[K]): void;
   _onUpdate: (() => void) | null;
   cssText: string;
@@ -30,8 +30,8 @@ class CSSStyleDeclarationImpl {
   constructor() {
     this._dict = {};
   }
-  _getRaw<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K] {
-    return this._dict[key] ?? INITIAL_VALUES[key];
+  _getRaw<K extends keyof CSSStyleDict>(key: K): CSSStyleDict[K] | null {
+    return (this._dict[key] as any) ?? null;
   }
   _setRaw<K extends keyof CSSStyleDict>(key: K, value: CSSStyleDict[K]): void {
     this._dict[key] = value;
