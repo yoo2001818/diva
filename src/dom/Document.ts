@@ -1,4 +1,5 @@
 import { StyleSheetList } from '../cssom/StyleSheetList';
+import { createHTMLElement } from '../html/createHTMLElement';
 import { Attr } from './Attr';
 import { CDATASection } from './CDATASection';
 import { ChildNode } from './ChildNode';
@@ -110,7 +111,7 @@ export class Document
     localName: string,
     _options?: string | ElementCreationOptions,
   ): Element {
-    return new Element(this, localName);
+    return createHTMLElement(this, localName, _options);
   }
 
   createElementNS(
