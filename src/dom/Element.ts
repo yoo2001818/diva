@@ -53,23 +53,17 @@ export class Element
     this._computedStyle.style._onUpdate = () => {
       this._setAttributeInternal('style', this._computedStyle.style.cssText);
     };
-    this._classList._onUpdate = () => {
+    this._classList._updateSignal.add(() => {
       this._setAttributeInternal('class', this._classList.value);
-    };
-    this._attributes._setHook('id', {
-      set: (value) => {
-        this._id = value ?? '';
-      },
     });
-    this._attributes._setHook('class', {
-      set: (value) => {
-        this._classList.value = value ?? '';
-      },
+    this._attributes._getSignal('id').add((value) => {
+      this._id = value ?? '';
     });
-    this._attributes._setHook('style', {
-      set: (value) => {
-        this._computedStyle.style.cssText = value ?? '';
-      },
+    this._attributes._getSignal('class').add((value) => {
+      this._classList.value = value ?? '';
+    });
+    this._attributes._getSignal('style').add((value) => {
+      this._computedStyle.style.cssText = value ?? '';
     });
   }
 

@@ -1,21 +1,22 @@
 import { Attr } from './Attr';
 import { Element } from './Element';
-
-export interface NamedNodeMapHook {
-  set(value: string | null): void;
-}
+import { Signal } from './Signal';
 
 export class NamedNodeMap {
   _ownerElement: Element;
   _attributes: Attr[] = [];
-  _hooks: Record<string, NamedNodeMapHook> = {};
+  _signals: Record<string, Signal<[string | null]>> = {};
 
   constructor(ownerElement: Element) {
     this._ownerElement = ownerElement;
   }
 
-  _setHook(name: string, hook: NamedNodeMapHook): void {
-    this._hooks[name] = hook;
+  _getSignal(name: string): Signal<[string | null]> {
+    const existing = this._signals[name];
+    if (existing != null) return existing;
+    const signal = new Signal<[string | null]>();
+    this._signals[name] = signal;
+    return signal;
   }
 
   get length(): number {
@@ -44,7 +45,7 @@ export class NamedNodeMap {
       throw new DOMException('Attr is in use', 'InUseAttributeError');
     }
     if (!ignoreHook) {
-      this._hooks[attr.name]?.set(attr.value);
+      this._signals[attr.name]?.emit(attr.value);
     }
     const oldAttr = this.getNamedItem(attr.name);
     if (oldAttr === attr) {
@@ -79,7 +80,7 @@ export class NamedNodeMap {
     if (attr == null) {
       throw new DOMException('Cannot find attribute', 'DOMException');
     }
-    this._hooks[qualifiedName]?.set(null);
+    this._signals[qualifiedName]?.emit(null);
     const index = attr._parentIndex!;
     attr._ownerElement = null;
     attr._parentIndex = null;

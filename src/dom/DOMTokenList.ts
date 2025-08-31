@@ -1,6 +1,8 @@
+import { Signal } from './Signal';
+
 export class DOMTokenList {
   private _tokens: string[] = [];
-  _onUpdate: (() => void) | null = null;
+  _updateSignal: Signal<[]> = new Signal();
 
   get length(): number {
     return this._tokens.length;
@@ -15,7 +17,7 @@ export class DOMTokenList {
   }
 
   _handleUpdate(): void {
-    this._onUpdate?.();
+    this._updateSignal.emit();
   }
 
   _validateToken(token: string): void {
