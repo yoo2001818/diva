@@ -5,6 +5,7 @@ import { Signal } from './Signal';
 export class NamedNodeMap {
   _ownerElement: Element;
   _attributes: Attr[] = [];
+  _changedSignal = new Signal<[]>();
   _signals: Record<string, Signal<[string | null]>> = {};
 
   constructor(ownerElement: Element) {
@@ -46,6 +47,7 @@ export class NamedNodeMap {
     }
     if (!ignoreHook) {
       this._signals[attr.name]?.emit(attr.value);
+      this._changedSignal.emit();
     }
     const oldAttr = this.getNamedItem(attr.name);
     if (oldAttr === attr) {

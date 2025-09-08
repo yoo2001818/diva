@@ -2,6 +2,7 @@ import { ChildNode } from './ChildNode';
 import { Element } from './Element';
 import { Node } from './Node';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
+import { Signal } from './Signal';
 import {
   elementAfter,
   elementBefore,
@@ -16,6 +17,7 @@ export class CharacterData
   implements ChildNode, NonDocumentTypeChildNode
 {
   _data: string = '';
+  _characterDataChangedSignal = new Signal<[]>();
 
   get data(): string {
     return this._data || '';
@@ -23,6 +25,7 @@ export class CharacterData
 
   set data(value: string) {
     this._data = value;
+    this._characterDataChangedSignal.emit();
   }
 
   get length(): number {

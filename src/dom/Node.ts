@@ -1,6 +1,7 @@
 import { Document } from './Document';
 import { Element } from './Element';
 import { NodeList, NodeListImpl } from './NodeList';
+import { Signal } from './Signal';
 import { ensurePreInsertionValidity } from './utils/node';
 
 export class Node {
@@ -21,6 +22,9 @@ export class Node {
   _parent: Node | null = null;
   _parentIndex: number | null = null;
   _childNodes: NodeListImpl = new NodeListImpl();
+  _childListChangedSignal = new Signal<[]>();
+  _parentSetSignal = new Signal<[]>();
+  _parentUnsetSignal = new Signal<[]>();
 
   constructor(document: Document | null) {
     this._document = document;
@@ -227,11 +231,13 @@ export class Node {
       item._parent = this;
       item._parentIndex = index + i;
       this._childNodes.splice(index + i, 0, item);
+      item._parentSetSignal.emit();
     }
     for (let i = index + nodes.length; i < this._childNodes.length; i += 1) {
       const node = this._childNodes[i];
       node._parentIndex = i;
     }
+    this._childListChangedSignal.emit();
     return node;
   }
 
@@ -247,6 +253,7 @@ export class Node {
     const index = child._parentIndex!;
     child._parent = null;
     child._parentIndex = null;
+    child._parentUnsetSignal.emit();
     let nodes = [node];
     if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
       nodes = node._childNodes;
@@ -266,6 +273,7 @@ export class Node {
       } else {
         this._childNodes.splice(index + i, 0, item);
       }
+      item._parentSetSignal.emit();
     }
     if (nodes.length !== 1) {
       for (
@@ -277,6 +285,7 @@ export class Node {
         node._parentIndex = i;
       }
     }
+    this._childListChangedSignal.emit();
     return child;
   }
 
@@ -292,6 +301,8 @@ export class Node {
       const node = this._childNodes[i];
       node._parentIndex = i;
     }
+    child._parentUnsetSignal.emit();
+    this._childListChangedSignal.emit();
     return child;
   }
 }

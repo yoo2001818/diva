@@ -14,6 +14,7 @@ import { Node } from './Node';
 import { NodeList } from './NodeList';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
 import { ParentNode } from './ParentNode';
+import { Signal } from './Signal';
 import { Text } from './Text';
 import {
   elementAfter,
@@ -45,6 +46,7 @@ export class Element
   _attributes: NamedNodeMap = new NamedNodeMap(this);
   _styleData: unknown;
   _computedStyle: ComputedStyle;
+  _attributesChangedSignal = new Signal<[]>();
 
   constructor(document: Document, tagName: string) {
     super(document);
@@ -64,6 +66,9 @@ export class Element
     });
     this._attributes._getSignal('style').add((value) => {
       this._computedStyle.style.cssText = value ?? '';
+    });
+    this._attributes._changedSignal.add(() => {
+      this._attributesChangedSignal.emit();
     });
   }
 
