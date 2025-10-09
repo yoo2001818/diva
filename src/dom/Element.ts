@@ -18,7 +18,7 @@ import { Node } from './Node';
 import { NodeList } from './NodeList';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
 import { ParentNode } from './ParentNode';
-import { Signal } from './Signal';
+import { RecursiveSignal, Signal } from './Signal';
 import { Text } from './Text';
 import {
   elementAfter,
@@ -38,6 +38,7 @@ import {
 } from './utils/element';
 import { htmlEscapeString, htmlIsVoid } from './utils/html';
 import { matchSelector } from './utils/selector';
+import { nodeRecursiveSignalRegisterFn } from './utils/signal';
 
 export class Element
   extends Node
@@ -55,6 +56,7 @@ export class Element
   constructor(document: Document, tagName: string) {
     super(document);
     this._tagName = tagName.toUpperCase();
+
     this._computedStyle = new ComputedStyle(this);
     this._computedStyle.style._onUpdate = () => {
       this._setAttributeInternal('style', this._computedStyle.style.cssText);
@@ -76,6 +78,16 @@ export class Element
         mutationRecordAttributesChanged(this, name, namespace, oldValue),
       );
     });
+
+    this._attributesChangedRecursiveSignal = new RecursiveSignal<
+      [MutationRecord]
+    >(
+      nodeRecursiveSignalRegisterFn(
+        this,
+        this._attributesChangedSignal,
+        (node) => node._attributesChangedRecursiveSignal,
+      ),
+    );
   }
 
   get nodeType(): number {

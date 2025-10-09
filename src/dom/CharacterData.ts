@@ -1,4 +1,5 @@
 import { ChildNode } from './ChildNode';
+import { Document } from './Document';
 import { Element } from './Element';
 import {
   MutationRecord,
@@ -6,7 +7,7 @@ import {
 } from './MutationRecord';
 import { Node } from './Node';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
-import { Signal } from './Signal';
+import { RecursiveSignal, Signal } from './Signal';
 import {
   elementAfter,
   elementBefore,
@@ -15,6 +16,7 @@ import {
   elementRemove,
   elementReplaceWith,
 } from './utils/element';
+import { nodeRecursiveSignalRegisterFn } from './utils/signal';
 
 export class CharacterData
   extends Node
@@ -22,6 +24,19 @@ export class CharacterData
 {
   _data: string = '';
   _characterDataChangedSignal = new Signal<[MutationRecord]>();
+
+  constructor(document: Document) {
+    super(document);
+    this._characterDataChangedRecursiveSignal = new RecursiveSignal<
+      [MutationRecord]
+    >(
+      nodeRecursiveSignalRegisterFn(
+        this,
+        this._characterDataChangedSignal,
+        (node) => node._characterDataChangedRecursiveSignal,
+      ),
+    );
+  }
 
   get data(): string {
     return this._data || '';

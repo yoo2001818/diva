@@ -53,12 +53,12 @@ export class NamedNodeMap {
     }
     if (!ignoreHook) {
       this._signals[attr.name]?.emit(attr.value);
-      this._changedSignal.emit({
-        name: attr.name,
-        namespace: null,
-        oldValue: oldAttr?.value ?? null,
-      });
     }
+    this._changedSignal.emit({
+      name: attr.name,
+      namespace: null,
+      oldValue: oldAttr?.value ?? null,
+    });
     if (oldAttr != null) {
       const index = oldAttr._parentIndex!;
       oldAttr._ownerElement = null;

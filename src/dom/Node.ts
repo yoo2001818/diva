@@ -5,8 +5,9 @@ import {
   MutationRecord,
 } from './MutationRecord';
 import { NodeList, NodeListImpl } from './NodeList';
-import { Signal } from './Signal';
+import { RecursiveSignal, Signal } from './Signal';
 import { ensurePreInsertionValidity } from './utils/node';
+import { nodeRecursiveSignalRegisterFn } from './utils/signal';
 
 export class Node {
   static readonly ELEMENT_NODE: number = 1;
@@ -29,6 +30,30 @@ export class Node {
   _childListChangedSignal = new Signal<[MutationRecord]>();
   _parentSetSignal = new Signal<[]>();
   _parentUnsetSignal = new Signal<[]>();
+  _childListChangedRecursiveSignal: Signal<[MutationRecord]> =
+    new RecursiveSignal<[MutationRecord]>(
+      nodeRecursiveSignalRegisterFn(
+        this,
+        this._childListChangedSignal,
+        (node) => node._childListChangedRecursiveSignal,
+      ),
+    );
+  _attributesChangedRecursiveSignal: Signal<[MutationRecord]> =
+    new RecursiveSignal<[MutationRecord]>(
+      nodeRecursiveSignalRegisterFn(
+        this,
+        null,
+        (node) => node._attributesChangedRecursiveSignal,
+      ),
+    );
+  _characterDataChangedRecursiveSignal: Signal<[MutationRecord]> =
+    new RecursiveSignal<[MutationRecord]>(
+      nodeRecursiveSignalRegisterFn(
+        this,
+        null,
+        (node) => node._characterDataChangedRecursiveSignal,
+      ),
+    );
 
   constructor(document: Document | null) {
     this._document = document;
