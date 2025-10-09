@@ -5,7 +5,9 @@ import { Signal } from './Signal';
 export class NamedNodeMap {
   _ownerElement: Element;
   _attributes: Attr[] = [];
-  _changedSignal = new Signal<[]>();
+  _changedSignal = new Signal<
+    [{ name: string; namespace: string | null; oldValue: string | null }]
+  >();
   _signals: Record<string, Signal<[string | null]>> = {};
 
   constructor(ownerElement: Element) {
@@ -45,13 +47,17 @@ export class NamedNodeMap {
     ) {
       throw new DOMException('Attr is in use', 'InUseAttributeError');
     }
-    if (!ignoreHook) {
-      this._signals[attr.name]?.emit(attr.value);
-      this._changedSignal.emit();
-    }
     const oldAttr = this.getNamedItem(attr.name);
     if (oldAttr === attr) {
       return attr;
+    }
+    if (!ignoreHook) {
+      this._signals[attr.name]?.emit(attr.value);
+      this._changedSignal.emit({
+        name: attr.name,
+        namespace: null,
+        oldValue: oldAttr?.value ?? null,
+      });
     }
     if (oldAttr != null) {
       const index = oldAttr._parentIndex!;

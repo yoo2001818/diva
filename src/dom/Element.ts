@@ -9,6 +9,10 @@ import { Comment } from './Comment';
 import { Document } from './Document';
 import { DOMTokenList } from './DOMTokenList';
 import { HTMLCollection, HTMLCollectionImpl } from './HTMLCollection';
+import {
+  MutationRecord,
+  mutationRecordAttributesChanged,
+} from './MutationRecord';
 import { NamedNodeMap } from './NamedNodeMap';
 import { Node } from './Node';
 import { NodeList } from './NodeList';
@@ -46,7 +50,7 @@ export class Element
   _attributes: NamedNodeMap = new NamedNodeMap(this);
   _styleData: unknown;
   _computedStyle: ComputedStyle;
-  _attributesChangedSignal = new Signal<[]>();
+  _attributesChangedSignal = new Signal<[MutationRecord]>();
 
   constructor(document: Document, tagName: string) {
     super(document);
@@ -67,8 +71,10 @@ export class Element
     this._attributes._getSignal('style').add((value) => {
       this._computedStyle.style.cssText = value ?? '';
     });
-    this._attributes._changedSignal.add(() => {
-      this._attributesChangedSignal.emit();
+    this._attributes._changedSignal.add(({ name, namespace, oldValue }) => {
+      this._attributesChangedSignal.emit(
+        mutationRecordAttributesChanged(this, name, namespace, oldValue),
+      );
     });
   }
 

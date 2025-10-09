@@ -1,5 +1,9 @@
 import { Document } from './Document';
 import { Element } from './Element';
+import {
+  mutationRecordChildListChanged,
+  MutationRecord,
+} from './MutationRecord';
 import { NodeList, NodeListImpl } from './NodeList';
 import { Signal } from './Signal';
 import { ensurePreInsertionValidity } from './utils/node';
@@ -22,7 +26,7 @@ export class Node {
   _parent: Node | null = null;
   _parentIndex: number | null = null;
   _childNodes: NodeListImpl = new NodeListImpl();
-  _childListChangedSignal = new Signal<[]>();
+  _childListChangedSignal = new Signal<[MutationRecord]>();
   _parentSetSignal = new Signal<[]>();
   _parentUnsetSignal = new Signal<[]>();
 
@@ -237,7 +241,15 @@ export class Node {
       const node = this._childNodes[i];
       node._parentIndex = i;
     }
-    this._childListChangedSignal.emit();
+    this._childListChangedSignal.emit(
+      mutationRecordChildListChanged(
+        this,
+        nodes,
+        [],
+        this._childNodes[index + nodes.length] ?? null,
+        this._childNodes[index - 1] ?? null,
+      ),
+    );
     return node;
   }
 
@@ -285,7 +297,15 @@ export class Node {
         node._parentIndex = i;
       }
     }
-    this._childListChangedSignal.emit();
+    this._childListChangedSignal.emit(
+      mutationRecordChildListChanged(
+        this,
+        nodes,
+        [child],
+        this._childNodes[index + nodes.length] ?? null,
+        this._childNodes[index - 1] ?? null,
+      ),
+    );
     return child;
   }
 
@@ -302,7 +322,15 @@ export class Node {
       node._parentIndex = i;
     }
     child._parentUnsetSignal.emit();
-    this._childListChangedSignal.emit();
+    this._childListChangedSignal.emit(
+      mutationRecordChildListChanged(
+        this,
+        [],
+        [child],
+        this._childNodes[index] ?? null,
+        this._childNodes[index - 1] ?? null,
+      ),
+    );
     return child;
   }
 }

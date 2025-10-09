@@ -1,5 +1,9 @@
 import { ChildNode } from './ChildNode';
 import { Element } from './Element';
+import {
+  MutationRecord,
+  mutationRecordCharacterDataChanged,
+} from './MutationRecord';
 import { Node } from './Node';
 import { NonDocumentTypeChildNode } from './NonDocumentTypeChildNode';
 import { Signal } from './Signal';
@@ -17,15 +21,18 @@ export class CharacterData
   implements ChildNode, NonDocumentTypeChildNode
 {
   _data: string = '';
-  _characterDataChangedSignal = new Signal<[]>();
+  _characterDataChangedSignal = new Signal<[MutationRecord]>();
 
   get data(): string {
     return this._data || '';
   }
 
   set data(value: string) {
+    const oldValue = this._data;
     this._data = value;
-    this._characterDataChangedSignal.emit();
+    this._characterDataChangedSignal.emit(
+      mutationRecordCharacterDataChanged(this, oldValue),
+    );
   }
 
   get length(): number {
