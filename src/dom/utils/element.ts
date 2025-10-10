@@ -5,6 +5,7 @@ import { HTMLCollection, HTMLCollectionImpl } from '../HTMLCollection';
 import { Node } from '../Node';
 import { NodeList, NodeListImpl } from '../NodeList';
 import { ensurePreInsertionValidity } from './node';
+import { filterSignal } from './signal';
 import { traverseElements } from './traversal';
 
 export function elementPreviousElementSibling(node: Node): Element | null {
@@ -175,6 +176,7 @@ export function elementGetElementsByTagName(
   qualifiedName: string,
 ): HTMLCollection {
   const name = qualifiedName.toUpperCase();
+  // FIXME: Optimize this, this is clearly awful
   return new HTMLCollectionImpl(() => {
     const list: Element[] = [];
     for (const item of traverseElements(node)) {
@@ -183,7 +185,7 @@ export function elementGetElementsByTagName(
       }
     }
     return list;
-  });
+  }, [node._childListChangedRecursiveSignal]);
 }
 
 export function elementGetElementsByTagNameNS(
@@ -198,6 +200,7 @@ export function elementGetElementsByClassName(
   node: Node,
   classNames: string,
 ): HTMLCollection {
+  // FIXME: Optimize this, this is clearly awful
   const classList = classNames.split(/\s+/).filter(Boolean);
   return new HTMLCollectionImpl(() => {
     const list: Element[] = [];
@@ -208,5 +211,11 @@ export function elementGetElementsByClassName(
       }
     }
     return list;
-  });
+  }, [
+    node._childListChangedRecursiveSignal,
+    filterSignal(
+      node._attributesChangedRecursiveSignal,
+      (record) => record.attributeName === 'class',
+    ),
+  ]);
 }

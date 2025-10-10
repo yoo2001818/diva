@@ -1,6 +1,6 @@
 import { MutationRecord } from '../MutationRecord';
 import { Node } from '../Node';
-import { Signal } from '../Signal';
+import { RecursiveSignal, Signal } from '../Signal';
 
 export function nodeRecursiveSignalRegisterFn<T extends any[]>(
   node: Node,
@@ -29,4 +29,21 @@ export function nodeRecursiveSignalRegisterFn<T extends any[]>(
       node._childListChangedSignal.delete(nodeListHandler);
     };
   };
+}
+
+export function filterSignal<T extends any[]>(
+  signal: Signal<T>,
+  filter: (...args: T) => boolean,
+) {
+  return new RecursiveSignal((listener) => {
+    const handler = (...args: T) => {
+      if (filter(...args)) {
+        listener(...args);
+      }
+    };
+    signal.add(handler);
+    return () => {
+      signal.delete(handler);
+    };
+  });
 }

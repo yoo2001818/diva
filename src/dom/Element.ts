@@ -52,6 +52,7 @@ export class Element
   _styleData: unknown;
   _computedStyle: ComputedStyle;
   _attributesChangedSignal = new Signal<[MutationRecord]>();
+  _children: HTMLCollection;
 
   constructor(document: Document, tagName: string) {
     super(document);
@@ -87,6 +88,13 @@ export class Element
         this._attributesChangedSignal,
         (node) => node._attributesChangedRecursiveSignal,
       ),
+    );
+    this._children = new HTMLCollectionImpl(
+      () =>
+        this._childNodes.filter(
+          (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
+        ),
+      [this._childListChangedSignal],
     );
   }
 
@@ -367,11 +375,7 @@ export class Element
   }
 
   get children(): HTMLCollection {
-    return new HTMLCollectionImpl(() =>
-      this._childNodes.filter(
-        (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
-      ),
-    );
+    return this._children;
   }
 
   get firstElementChild(): Element | null {

@@ -1,3 +1,4 @@
+import { Document } from './Document';
 import { Element } from './Element';
 import { HTMLCollection, HTMLCollectionImpl } from './HTMLCollection';
 import { Node } from './Node';
@@ -17,6 +18,19 @@ export class DocumentFragment
   extends Node
   implements ParentNode, NonElementParentNode
 {
+  _children: HTMLCollection;
+
+  constructor(document: Document | null) {
+    super(document);
+    this._children = new HTMLCollectionImpl(
+      () =>
+        this._childNodes.filter(
+          (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
+        ),
+      [this._childListChangedSignal],
+    );
+  }
+
   get nodeType(): number {
     return Node.DOCUMENT_FRAGMENT_NODE;
   }
@@ -34,11 +48,7 @@ export class DocumentFragment
   }
 
   get children(): HTMLCollection {
-    return new HTMLCollectionImpl(() =>
-      this._childNodes.filter(
-        (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
-      ),
-    );
+    return this._children;
   }
 
   get firstElementChild(): Element | null {

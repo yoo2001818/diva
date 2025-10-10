@@ -32,12 +32,20 @@ export class Document
   implements ParentNode, ChildNode, NonElementParentNode
 {
   _styleSheets: StyleSheetList;
+  _children: HTMLCollection;
 
   constructor() {
     super(null);
     this._document = this;
     this._styleSheets = new StyleSheetList();
     this.appendChild(this.createElement('html'));
+    this._children = new HTMLCollectionImpl(
+      () =>
+        this._childNodes.filter(
+          (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
+        ),
+      [this._childListChangedSignal],
+    );
   }
 
   get nodeType(): number {
@@ -186,11 +194,7 @@ export class Document
   }
 
   get children(): HTMLCollection {
-    return new HTMLCollectionImpl(() =>
-      this._childNodes.filter(
-        (v): v is Element => v.nodeType === Node.ELEMENT_NODE,
-      ),
-    );
+    return this._children;
   }
 
   get firstElementChild(): Element | null {

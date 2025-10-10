@@ -1,4 +1,5 @@
 import type { Element } from './Element';
+import { Signal } from './Signal';
 
 export interface HTMLCollection {
   [index: number]: Element;
@@ -11,12 +12,21 @@ export class HTMLCollectionImpl
   extends Array<Element>
   implements HTMLCollection
 {
-  // TODO: This is not "live"
   _updater: () => Array<Element>;
-  constructor(updater: () => Array<Element>) {
+  _updateSignals: Signal<any[]>[];
+  constructor(
+    updater: () => Array<Element>,
+    updateSignals: Signal<any[]>[] = [],
+  ) {
     super();
+    this._update = this._update.bind(this);
     this._updater = updater;
+    this._updateSignals = updateSignals;
+    updateSignals.forEach((signal) => signal.add(this._update));
     this._update();
+  }
+  dispose(): void {
+    this._updateSignals.forEach((signal) => signal.delete(this._update));
   }
   _update(): void {
     const result = this._updater();
