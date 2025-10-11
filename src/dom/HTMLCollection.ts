@@ -14,6 +14,7 @@ export class HTMLCollectionImpl
 {
   _updater: () => Array<Element>;
   _updateSignals: Signal<any[]>[];
+  _updateSignal: Signal<[]> = new Signal();
   constructor(
     updater: () => Array<Element>,
     updateSignals: Signal<any[]>[] = [],
@@ -32,6 +33,7 @@ export class HTMLCollectionImpl
     const result = this._updater();
     this.length = 0;
     this.push(...result);
+    this._updateSignal.emit();
   }
   item(index: number): Element | null {
     return this[index] ?? null;

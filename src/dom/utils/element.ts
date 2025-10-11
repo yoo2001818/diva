@@ -174,7 +174,7 @@ export function elementGetElementById(
 export function elementGetElementsByTagName(
   node: Node,
   qualifiedName: string,
-): HTMLCollection {
+): HTMLCollectionImpl {
   const name = qualifiedName.toUpperCase();
   // FIXME: Optimize this, this is clearly awful
   return new HTMLCollectionImpl(() => {
@@ -185,21 +185,37 @@ export function elementGetElementsByTagName(
       }
     }
     return list;
-  }, [node._childListChangedRecursiveSignal]);
+  }, [
+    filterSignal(node._childListChangedRecursiveSignal, (record) => {
+      for (let i = 0; i < record.addedNodes.length; i += 1) {
+        const node = record.addedNodes[i];
+        if (node instanceof Element && node.tagName === qualifiedName) {
+          return true;
+        }
+      }
+      for (let i = 0; i < record.removedNodes.length; i += 1) {
+        const node = record.removedNodes[i];
+        if (node instanceof Element && node.tagName === qualifiedName) {
+          return true;
+        }
+      }
+      return false;
+    }),
+  ]);
 }
 
 export function elementGetElementsByTagNameNS(
   node: Node,
   _namespace: string | null,
   localName: string,
-): HTMLCollection {
+): HTMLCollectionImpl {
   return elementGetElementsByTagName(node, localName);
 }
 
 export function elementGetElementsByClassName(
   node: Node,
   classNames: string,
-): HTMLCollection {
+): HTMLCollectionImpl {
   // FIXME: Optimize this, this is clearly awful
   const classList = classNames.split(/\s+/).filter(Boolean);
   return new HTMLCollectionImpl(() => {

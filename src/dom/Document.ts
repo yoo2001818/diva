@@ -37,7 +37,7 @@ export class Document
   constructor() {
     super(null);
     this._document = this;
-    this._styleSheets = new StyleSheetList();
+    this._styleSheets = new StyleSheetList(this);
     this.appendChild(this.createElement('html'));
     this._children = new HTMLCollectionImpl(
       () =>
