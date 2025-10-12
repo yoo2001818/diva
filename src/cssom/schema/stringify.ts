@@ -9,7 +9,7 @@ import {
   CSSPercentage,
   CSSRgb,
   CSSUrl,
-} from './dict';
+} from '../dict';
 
 export function stringifyLength(value: CSSLength): string {
   return String(value.value) + (value.unit ?? '');

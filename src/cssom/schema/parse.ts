@@ -8,7 +8,7 @@ import {
   CSSPercentage,
   CSSRgb,
   CSSUrl,
-} from './dict';
+} from '../dict';
 
 export class Parser {
   _input: string = '';

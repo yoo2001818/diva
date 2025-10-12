@@ -7,7 +7,7 @@ import {
   CSSPercentage,
   CSSStyleDict,
 } from './dict';
-import { parse, Parser } from './parse';
+import { parse, Parser } from './schema/parse';
 import {
   stringifyColor,
   stringifyKeyword,
@@ -15,7 +15,7 @@ import {
   stringifySideShorthand,
   stringifySize,
   stringifyUrl,
-} from './stringify';
+} from './schema/stringify';
 import { kebabize } from './utils';
 
 export interface CSSSchemaEntry {

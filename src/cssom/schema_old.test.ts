@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { CSSStyleDict, INITIAL_VALUES } from './dict';
-import { schema } from './schema';
+import { schema } from './schema_old';
 
 test('Schema converts padding', () => {
   const dict: CSSStyleDict = { ...INITIAL_VALUES };

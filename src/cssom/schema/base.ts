@@ -1,13 +1,7 @@
-import { CSSKeyword, CSSLength, CSSPercentage, CSSStyleDict } from './dict';
+import { CSSKeyword, CSSLength, CSSPercentage, CSSStyleDict } from '../dict';
 import { parse, Parser } from './parse';
-import {
-  stringifyColor,
-  stringifyKeyword,
-  stringifySideShorthand,
-  stringifySize,
-  stringifyUrl,
-} from './stringify';
-import { StyleDictMap, StyleDictRecord, StylePriority } from './StyleDictMap';
+import { stringifySideShorthand, stringifySize } from './stringify';
+import { StyleDictMap, StyleDictRecord, StylePriority } from '../StyleDictMap';
 
 export interface StyleSchemaEntry {
   get(map: StyleDictMap): string | null;
@@ -17,7 +11,7 @@ export interface StyleSchemaEntry {
   coalesceProperties?: string[];
 }
 
-function entry<K extends keyof CSSStyleDict>(
+export function entry<K extends keyof CSSStyleDict>(
   property: K,
   get: (v: CSSStyleDict[K]) => string,
   parseFunc: (v: Parser) => CSSStyleDict[K] | null,
@@ -49,7 +43,7 @@ type KeysMatching<T, V> = {
   [K in keyof T]-?: T[K] extends V ? K : never;
 }[keyof T];
 
-function sizeEntry<
+export function sizeEntry<
   K extends KeysMatching<
     CSSStyleDict,
     CSSLength | CSSPercentage | CSSKeyword<any>
@@ -72,7 +66,7 @@ function sizeEntry<
   );
 }
 
-function getPropertiesPriority<K extends keyof CSSStyleDict>(
+export function getPropertiesPriority<K extends keyof CSSStyleDict>(
   map: StyleDictMap,
   properties: K[],
 ): StylePriority | null {
@@ -83,7 +77,7 @@ function getPropertiesPriority<K extends keyof CSSStyleDict>(
   return null;
 }
 
-function getProperties<Ks extends (keyof CSSStyleDict)[]>(
+export function getProperties<Ks extends (keyof CSSStyleDict)[]>(
   map: StyleDictMap,
   properties: Ks,
 ): { [K in keyof Ks]: CSSStyleDict[Ks[K]] } | null {
@@ -101,17 +95,17 @@ function getProperties<Ks extends (keyof CSSStyleDict)[]>(
   return (records as StyleDictRecord[]).map((record) => record.value) as any;
 }
 
-function sideShorthand<K extends keyof CSSStyleDict>(
-  properties: [K, K, K, K],
-  get: (v: CSSStyleDict[K]) => string,
-  parseFunc: (v: Parser) => CSSStyleDict[K] | null,
+export function shorthandEntry<Ks extends [] | (keyof CSSStyleDict)[]>(
+  properties: Ks,
+  get: (record: { [K in keyof Ks]: CSSStyleDict[Ks[K]] }) => string,
+  parseFunc: (v: Parser) => { [K in keyof Ks]: CSSStyleDict[Ks[K]] } | null,
   coalesceProperties?: string[],
 ): StyleSchemaEntry {
   return {
     get(map) {
       const values = getProperties(map, properties);
       if (values != null) {
-        return stringifySideShorthand(values, get);
+        return get(values);
       }
       return null;
     },
@@ -119,7 +113,7 @@ function sideShorthand<K extends keyof CSSStyleDict>(
       return getPropertiesPriority(map, properties) ?? null;
     },
     set(map, input, priority) {
-      const value = parse(input, (v) => v.sideShorthand(() => parseFunc(v)));
+      const value = parse(input, parseFunc);
       if (value != null) {
         properties.forEach((prop, i) => {
           map.set(prop, value[i], priority);
@@ -135,7 +129,24 @@ function sideShorthand<K extends keyof CSSStyleDict>(
   };
 }
 
-function sideShorthandSet<K extends keyof CSSStyleDict, K2 extends string>(
+export function sideShorthand<K extends keyof CSSStyleDict>(
+  properties: [K, K, K, K],
+  get: (v: CSSStyleDict[K]) => string,
+  parseFunc: (v: Parser) => CSSStyleDict[K] | null,
+  coalesceProperties?: string[],
+): StyleSchemaEntry {
+  return shorthandEntry(
+    properties,
+    (values) => stringifySideShorthand(values, get),
+    (v) => v.sideShorthand(() => parseFunc(v)),
+    coalesceProperties,
+  );
+}
+
+export function sideShorthandSet<
+  K extends keyof CSSStyleDict,
+  K2 extends string,
+>(
   name: K2,
   keys: [K, K, K, K],
   get: (v: CSSStyleDict[K]) => string,
@@ -149,35 +160,3 @@ function sideShorthandSet<K extends keyof CSSStyleDict, K2 extends string>(
     [name]: sideShorthand(keys, get, parseFunc),
   } as Record<K | K2, StyleSchemaEntry>;
 }
-
-export const schema = {
-  backgroundAttachment: entry('backgroundAttachment', stringifyKeyword, (v) =>
-    v.keyword('scroll', 'fixed', 'inherit'),
-  ),
-  backgroundColor: entry('backgroundColor', stringifyColor, (v) =>
-    v.oneOf(
-      () => v.keyword('inherit'),
-      () => v.color(),
-    ),
-  ),
-  backgroundImage: entry('backgroundImage', stringifyUrl, (v) =>
-    v.oneOf(
-      () => v.url(),
-      () => v.keyword('none', 'inherit'),
-    ),
-  ),
-  backgroundPositionX: entry('backgroundPositionX', stringifySize, (v) =>
-    v.oneOf(
-      () => v.length(),
-      () => v.percentage(),
-      () => v.keyword('left', 'center', 'right', 'inherit'),
-    ),
-  ),
-  backgroundPositionY: entry('backgroundPositionY', stringifySize, (v) =>
-    v.oneOf(
-      () => v.length(),
-      () => v.percentage(),
-      () => v.keyword('top', 'center', 'bottom', 'inherit'),
-    ),
-  ),
-};

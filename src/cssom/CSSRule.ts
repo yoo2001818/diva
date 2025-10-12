@@ -1,7 +1,7 @@
 import { CSSStyleDeclaration } from './CSSStyleDeclaration';
 import { CSSStyleSheet } from './CSSStyleSheet';
 import { parse, Root, Rule } from 'postcss';
-import { schema } from './schema';
+import { schema } from './schema_old';
 
 export class CSSRule {
   _cssText: string = '';

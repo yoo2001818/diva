@@ -5,7 +5,7 @@ import {
   CSSSchemaKeysKebab,
   schema,
   schemaKebab,
-} from './schema';
+} from './schema_old';
 import { kebabize } from './utils';
 
 export type CSSStyleDeclaration = {
