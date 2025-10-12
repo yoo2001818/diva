@@ -26,6 +26,8 @@ export class InlineBoxNode extends LayoutNode {
         node = node.nextSibling;
       }
       this.children.push(new InlineEndMarkerNode(layoutNode.node));
+    } else if (layoutNode.isBlock()) {
+      // FIXME: InlineBoxNode must be stopped, continued from the parent, then reconstructed
     } else {
       this.children.push(layoutNode);
       layoutNode.resolveStyle();
