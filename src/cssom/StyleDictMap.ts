@@ -1,8 +1,10 @@
 import { CSSStyleDict } from './dict';
 
-export interface StyleDictRecord<T> {
+export type StylePriority = 'important' | null;
+
+export interface StyleDictRecord<T = any> {
   value: T;
-  priority: 'important' | null;
+  priority: StylePriority;
 }
 
 export class StyleDictMap {
