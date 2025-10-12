@@ -151,12 +151,13 @@ export function sideShorthandSet<
   keys: [K, K, K, K],
   get: (v: CSSStyleDict[K]) => string,
   parseFunc: (v: Parser) => CSSStyleDict[K] | null,
+  coalesceProperties: string[] = [],
 ): Record<K | K2, StyleSchemaEntry> {
   return {
-    [keys[0]]: entry(keys[0], get, parseFunc, [name]),
-    [keys[1]]: entry(keys[1], get, parseFunc, [name]),
-    [keys[2]]: entry(keys[2], get, parseFunc, [name]),
-    [keys[3]]: entry(keys[3], get, parseFunc, [name]),
-    [name]: sideShorthand(keys, get, parseFunc),
+    [keys[0]]: entry(keys[0], get, parseFunc, [name, ...coalesceProperties]),
+    [keys[1]]: entry(keys[1], get, parseFunc, [name, ...coalesceProperties]),
+    [keys[2]]: entry(keys[2], get, parseFunc, [name, ...coalesceProperties]),
+    [keys[3]]: entry(keys[3], get, parseFunc, [name, ...coalesceProperties]),
+    [name]: sideShorthand(keys, get, parseFunc, coalesceProperties),
   } as Record<K | K2, StyleSchemaEntry>;
 }
