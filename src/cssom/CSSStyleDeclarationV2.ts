@@ -1,3 +1,6 @@
+import { SCHEMA_CASED } from './schema';
+import { StyleDictMap } from './StyleDictMap';
+
 export interface CSSStyleDeclaration {
   [index: number]: string;
   cssText: string;
@@ -13,48 +16,54 @@ export interface CSSStyleDeclaration {
   background: string;
 }
 
-interface CSSDeclarationRecord {
-  value: string;
-  valueAST: any;
-  priority: string;
-}
-
-export class CSSStyleDeclarationImpl
-  extends Array<string>
-  implements CSSStyleDeclaration
-{
-  _records: CSSDeclarationRecord[] = [];
-  constructor() {
-    super();
-  }
+export class CSSStyleDeclarationImpl implements CSSStyleDeclaration {
+  [index: number]: string;
+  _dictMap: StyleDictMap = new StyleDictMap();
   get cssText(): string {
     return '';
   }
   set cssText(value: string) {}
+  get length(): number {
+    return this._dictMap.records.size;
+  }
   item(index: number): string {
-    return this[index] ?? '';
+    const names = Array.from(this._dictMap.records.keys());
+    return names[index] ?? '';
   }
   getPropertyValue(property: string): string {
-    throw new Error('Method not implemented.');
+    if (property in SCHEMA_CASED) {
+      const schema = SCHEMA_CASED[property as keyof typeof SCHEMA_CASED];
+      return schema.get(this._dictMap) ?? '';
+    }
+    return '';
   }
   getPropertyPriority(property: string): string {
-    throw new Error('Method not implemented.');
+    if (property in SCHEMA_CASED) {
+      const schema = SCHEMA_CASED[property as keyof typeof SCHEMA_CASED];
+      return schema.getPriority(this._dictMap) ?? '';
+    }
+    return '';
   }
   setProperty(property: string, value: string, priority?: string): void {
-    throw new Error('Method not implemented.');
-    // NB: shorthand property is never recorded directly into here, it's reconciled when cssText is called?
-    // How does this work? Maybe there's a "canonicalizer" that activates once whenever conditions are satisfied.
-    // margin, for example... would only work if there are all four values present, and if so, when it encounters
-    // the first value of the group, it spits the entire group out and deactivates all other items.
+    if (property in SCHEMA_CASED) {
+      const schema = SCHEMA_CASED[property as keyof typeof SCHEMA_CASED];
+      schema.set(
+        this._dictMap,
+        value,
+        priority === 'important' ? 'important' : null,
+      );
+    }
   }
   removeProperty(property: string): string {
-    throw new Error('Method not implemented.');
+    if (property in SCHEMA_CASED) {
+      const schema = SCHEMA_CASED[property as keyof typeof SCHEMA_CASED];
+      const before = schema.get(this._dictMap) ?? '';
+      schema.remove(this._dictMap);
+      return before;
+    }
+    return '';
   }
   get parentRule(): CSSRule | null {
     return null;
   }
-  get background(): string {
-    return '';
-  }
-  set background(value: string) {}
 }
