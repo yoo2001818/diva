@@ -28,3 +28,8 @@ export function getSpecificity(
   }
   return specificity;
 }
+
+export function isDeepEqual(a: any, b: any): boolean {
+  // FIXME: This is horrible
+  return JSON.stringify(a) === JSON.stringify(b);
+}

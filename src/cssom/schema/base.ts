@@ -2,6 +2,7 @@ import { CSSKeyword, CSSLength, CSSPercentage, CSSStyleDict } from '../dict';
 import { parse, Parser } from './parse';
 import { stringifySideShorthand, stringifySize } from './stringify';
 import { StyleDictMap, StyleDictRecord, StylePriority } from '../StyleDictMap';
+import { isDeepEqual } from '../utils';
 
 export interface StyleSchemaEntry {
   get(map: StyleDictMap): string | null;
@@ -39,7 +40,7 @@ export function entry<K extends keyof CSSStyleDict>(
   };
 }
 
-type KeysMatching<T, V> = {
+export type KeysMatching<T, V> = {
   [K in keyof T]-?: T[K] extends V ? K : never;
 }[keyof T];
 
@@ -86,9 +87,7 @@ export function getProperties<Ks extends (keyof CSSStyleDict)[]>(
     return null;
   }
   if (
-    records
-      .slice(1)
-      .every((record) => record?.priority !== records[0]?.priority)
+    records.slice(1).some((record) => record?.priority !== records[0]?.priority)
   ) {
     return null;
   }
@@ -129,6 +128,71 @@ export function shorthandEntry<Ks extends [] | (keyof CSSStyleDict)[]>(
   };
 }
 
+export function getProperties2D<Ks extends (keyof CSSStyleDict)[][]>(
+  map: StyleDictMap,
+  properties: Ks,
+): { [K in keyof Ks]: CSSStyleDict[Ks[K][0]] } | null {
+  const records = properties.map((props) => props.map((prop) => map.get(prop)));
+  if (
+    records.some(
+      (v) =>
+        !v.every(
+          (record) => record != null && isDeepEqual(record.value, v[0]?.value),
+        ),
+    )
+  ) {
+    return null;
+  }
+  if (
+    records.some((v) =>
+      v.slice(1).some((record) => record?.priority !== v[0]?.priority),
+    )
+  ) {
+    return null;
+  }
+  return (records as StyleDictRecord[][]).map(
+    (record) => record[0].value,
+  ) as any;
+}
+
+export function shorthandEntry2D<Ks extends [] | (keyof CSSStyleDict)[][]>(
+  properties: Ks,
+  get: (record: { [K in keyof Ks]: CSSStyleDict[Ks[K][0]] }) => string,
+  parseFunc: (v: Parser) => { [K in keyof Ks]: CSSStyleDict[Ks[K][0]] } | null,
+  coalesceProperties?: string[],
+): StyleSchemaEntry {
+  return {
+    get(map) {
+      const values = getProperties2D(map, properties);
+      if (values != null) {
+        return get(values);
+      }
+      return null;
+    },
+    getPriority(map) {
+      return getPropertiesPriority(map, properties.flat()) ?? null;
+    },
+    set(map, input, priority) {
+      const value = parse(input, parseFunc);
+      if (value != null) {
+        properties.forEach((props, i) => {
+          props.forEach((prop) => {
+            map.set(prop, value[i], priority);
+          });
+        });
+      }
+    },
+    remove(map) {
+      properties.forEach((props) => {
+        props.forEach((prop) => {
+          map.remove(prop);
+        });
+      });
+    },
+    coalesceProperties,
+  };
+}
+
 export function sideShorthand<K extends keyof CSSStyleDict>(
   properties: [K, K, K, K],
   get: (v: CSSStyleDict[K]) => string,
@@ -152,12 +216,29 @@ export function sideShorthandSet<
   get: (v: CSSStyleDict[K]) => string,
   parseFunc: (v: Parser) => CSSStyleDict[K] | null,
   coalesceProperties: string[] = [],
+  coalescePropertiesPerDir: string[][] = [],
 ): Record<K | K2, StyleSchemaEntry> {
   return {
-    [keys[0]]: entry(keys[0], get, parseFunc, [name, ...coalesceProperties]),
-    [keys[1]]: entry(keys[1], get, parseFunc, [name, ...coalesceProperties]),
-    [keys[2]]: entry(keys[2], get, parseFunc, [name, ...coalesceProperties]),
-    [keys[3]]: entry(keys[3], get, parseFunc, [name, ...coalesceProperties]),
+    [keys[0]]: entry(keys[0], get, parseFunc, [
+      name,
+      ...(coalescePropertiesPerDir[0] ?? []),
+      ...coalesceProperties,
+    ]),
+    [keys[1]]: entry(keys[1], get, parseFunc, [
+      name,
+      ...(coalescePropertiesPerDir[1] ?? []),
+      ...coalesceProperties,
+    ]),
+    [keys[2]]: entry(keys[2], get, parseFunc, [
+      name,
+      ...(coalescePropertiesPerDir[2] ?? []),
+      ...coalesceProperties,
+    ]),
+    [keys[3]]: entry(keys[3], get, parseFunc, [
+      name,
+      ...(coalescePropertiesPerDir[3] ?? []),
+      ...coalesceProperties,
+    ]),
     [name]: sideShorthand(keys, get, parseFunc, coalesceProperties),
   } as Record<K | K2, StyleSchemaEntry>;
 }

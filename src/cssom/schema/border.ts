@@ -1,12 +1,12 @@
-import { parse } from 'postcss';
+import { CSSBorderStyle, CSSStyleDict } from '../dict';
 import {
-  CSSBorderStyle,
-  CSSBorderWidth,
-  CSSColor,
-  CSSKeyword,
-  CSSStyleDict,
-} from '../dict';
-import { entry, sideShorthandSet } from './base';
+  entry,
+  KeysMatching,
+  shorthandEntry,
+  shorthandEntry2D,
+  sideShorthandSet,
+  StyleSchemaEntry,
+} from './base';
 import { stringifyColor, stringifyKeyword, stringifySize } from './stringify';
 
 const BORDER_STYLES: CSSBorderStyle['type'][] = [
@@ -22,69 +22,49 @@ const BORDER_STYLES: CSSBorderStyle['type'][] = [
   'outset',
 ];
 
-interface BorderEntryValue {
-  color: CSSColor | CSSKeyword<'inherit'>;
-  style: CSSBorderStyle | CSSKeyword<'inherit'>;
-  width: CSSBorderWidth | CSSKeyword<'inherit'>;
-}
-
 function borderEntry(
-  get: (dict: CSSStyleDict) => BorderEntryValue,
-  set: (dict: CSSStyleDict, value: BorderEntryValue) => void,
-): CSSSchemaEntry {
-  return {
-    get(dict) {
-      const { color, style, width } = get(dict);
+  colorKey: KeysMatching<CSSStyleDict, CSSStyleDict['borderTopColor']>,
+  styleKey: KeysMatching<CSSStyleDict, CSSStyleDict['borderTopStyle']>,
+  widthKey: KeysMatching<CSSStyleDict, CSSStyleDict['borderTopWidth']>,
+  coalesceProperties?: string[],
+): StyleSchemaEntry {
+  return shorthandEntry(
+    [colorKey, styleKey, widthKey],
+    ([color, style, width]) => {
       return [
         stringifySize(width),
         stringifyKeyword(style),
         stringifyColor(color),
       ].join(' ');
     },
-    set(dict, input) {
-      const item = parse(input, (v) =>
-        v.oneOf(
-          () => v.keyword('inherit'),
-          () =>
-            v.any({
-              width: () =>
-                v.oneOf(
-                  () => v.length(),
-                  () => v.keyword('thin', 'medium', 'thick'),
-                ),
-              style: () => v.keyword(...BORDER_STYLES),
-              color: () => v.color(),
-            }),
-        ),
+    (v) => {
+      const item = v.oneOf(
+        () => v.keyword('inherit'),
+        () =>
+          v.any({
+            width: () =>
+              v.oneOf(
+                () => v.length(),
+                () => v.keyword('thin', 'medium', 'thick'),
+              ),
+            style: () => v.keyword(...BORDER_STYLES),
+            color: () => v.color(),
+          }),
       );
       if (item != null) {
         if ('type' in item) {
-          set(dict, { color: item, style: item, width: item });
+          return [item, item, item];
         } else {
-          const prev = { ...get(dict), ...item };
-          set(dict, prev);
+          return [
+            item.color ?? { type: 'hash', value: '000000' },
+            item.style ?? { type: 'none' },
+            item.width ?? { type: 'length', value: 0 },
+          ];
         }
       }
+      return null;
     },
-  };
-}
-
-function borderEntryKey(
-  colorKey: KeysMatching<CSSStyleDict, BorderEntryValue['color']>[],
-  styleKey: KeysMatching<CSSStyleDict, BorderEntryValue['style']>[],
-  widthKey: KeysMatching<CSSStyleDict, BorderEntryValue['width']>[],
-): CSSSchemaEntry {
-  return borderEntry(
-    (dict) => ({
-      width: dict[widthKey[0]],
-      style: dict[styleKey[0]],
-      color: dict[colorKey[0]],
-    }),
-    (dict, value) => {
-      widthKey.forEach((k) => (dict[k] = value.width));
-      styleKey.forEach((k) => (dict[k] = value.style));
-      colorKey.forEach((k) => (dict[k] = value.color));
-    },
+    coalesceProperties,
   );
 }
 
@@ -106,6 +86,8 @@ export const BORDER_SCHEMA = {
         () => v.keyword('inherit'),
         () => v.color(),
       ),
+    ['border'],
+    [['borderTop'], ['borderRight'], ['borderBottom'], ['borderLeft']],
   ),
   ...sideShorthandSet(
     'borderStyle',
@@ -117,6 +99,8 @@ export const BORDER_SCHEMA = {
     ],
     stringifyKeyword,
     (v) => v.keyword(...BORDER_STYLES, 'inherit'),
+    ['border'],
+    [['borderTop'], ['borderRight'], ['borderBottom'], ['borderLeft']],
   ),
   ...sideShorthandSet(
     'borderWidth',
@@ -132,45 +116,84 @@ export const BORDER_SCHEMA = {
         () => v.length(),
         () => v.keyword('thin', 'medium', 'thick', 'inherit'),
       ),
+    ['border'],
+    [['borderTop'], ['borderRight'], ['borderBottom'], ['borderLeft']],
   ),
-  borderTop: borderEntryKey(
-    ['borderTopColor'],
-    ['borderTopStyle'],
-    ['borderTopWidth'],
+  borderTop: borderEntry('borderTopColor', 'borderTopStyle', 'borderTopWidth', [
+    'border',
+  ]),
+  borderRight: borderEntry(
+    'borderRightColor',
+    'borderRightStyle',
+    'borderRightWidth',
+    ['border'],
   ),
-  borderRight: borderEntryKey(
-    ['borderRightColor'],
-    ['borderRightStyle'],
-    ['borderRightWidth'],
+  borderBottom: borderEntry(
+    'borderBottomColor',
+    'borderBottomStyle',
+    'borderBottomWidth',
+    ['border'],
   ),
-  borderBottom: borderEntryKey(
-    ['borderBottomColor'],
-    ['borderBottomStyle'],
-    ['borderBottomWidth'],
+  borderLeft: borderEntry(
+    'borderLeftColor',
+    'borderLeftStyle',
+    'borderLeftWidth',
+    ['border'],
   ),
-  borderLeft: borderEntryKey(
-    ['borderLeftColor'],
-    ['borderLeftStyle'],
-    ['borderLeftWidth'],
-  ),
-  border: borderEntryKey(
+  border: shorthandEntry2D(
     [
-      'borderTopColor',
-      'borderRightColor',
-      'borderBottomColor',
-      'borderLeftColor',
+      [
+        'borderTopColor',
+        'borderRightColor',
+        'borderBottomColor',
+        'borderLeftColor',
+      ],
+      [
+        'borderTopStyle',
+        'borderRightStyle',
+        'borderBottomStyle',
+        'borderLeftStyle',
+      ],
+      [
+        'borderTopWidth',
+        'borderRightWidth',
+        'borderBottomWidth',
+        'borderLeftWidth',
+      ],
     ],
-    [
-      'borderTopStyle',
-      'borderRightStyle',
-      'borderBottomStyle',
-      'borderLeftStyle',
-    ],
-    [
-      'borderTopWidth',
-      'borderRightWidth',
-      'borderBottomWidth',
-      'borderLeftWidth',
-    ],
+    ([color, style, width]) => {
+      return [
+        stringifySize(width),
+        stringifyKeyword(style),
+        stringifyColor(color),
+      ].join(' ');
+    },
+    (v) => {
+      const item = v.oneOf(
+        () => v.keyword('inherit'),
+        () =>
+          v.any({
+            width: () =>
+              v.oneOf(
+                () => v.length(),
+                () => v.keyword('thin', 'medium', 'thick'),
+              ),
+            style: () => v.keyword(...BORDER_STYLES),
+            color: () => v.color(),
+          }),
+      );
+      if (item != null) {
+        if ('type' in item) {
+          return [item, item, item];
+        } else {
+          return [
+            item.color ?? { type: 'hash', value: '000000' },
+            item.style ?? { type: 'none' },
+            item.width ?? { type: 'length', value: 0 },
+          ];
+        }
+      }
+      return null;
+    },
   ),
 };
