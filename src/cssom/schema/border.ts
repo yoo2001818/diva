@@ -9,7 +9,7 @@ import {
 } from './base';
 import { stringifyColor, stringifyKeyword, stringifySize } from './stringify';
 
-const BORDER_STYLES: CSSBorderStyle['type'][] = [
+export const BORDER_STYLES: CSSBorderStyle['type'][] = [
   'none',
   'hidden',
   'dotted',
