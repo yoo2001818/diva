@@ -1,3 +1,4 @@
+import { Signal } from '../dom/Signal';
 import { CSSRule } from './CSSRule';
 import { CSSStyleDict } from './dict';
 import { SCHEMA, SCHEMA_CASED } from './schema';
@@ -50,9 +51,17 @@ export type CSSStyleDeclaration = CSSStyleDeclarationInterface & {
   [key in keyof typeof SCHEMA_CASED]: string;
 };
 
-class CSSStyleDeclarationImpl implements CSSStyleDeclarationInterface {
+export interface CSSStyleDeclarationInternalInterface {
+  _dictMap: StyleDictMap;
+  _changedSignal: Signal<[]>;
+}
+
+class CSSStyleDeclarationImpl
+  implements CSSStyleDeclarationInterface, CSSStyleDeclarationInternalInterface
+{
   [index: number]: string;
   _dictMap: StyleDictMap = new StyleDictMap();
+  _changedSignal = new Signal<[]>();
   private _namesCache: string[] = [];
   private _namesDirty = true;
   private _indexCount = 0;
@@ -267,6 +276,7 @@ class CSSStyleDeclarationImpl implements CSSStyleDeclarationInterface {
     );
     this._markNamesDirty();
     this._ensureIndexProperties();
+    this._changedSignal.emit();
   }
 
   removeProperty(property: string): string {
@@ -276,6 +286,7 @@ class CSSStyleDeclarationImpl implements CSSStyleDeclarationInterface {
     schema.remove(this._dictMap);
     this._markNamesDirty();
     this._ensureIndexProperties();
+    this._changedSignal.emit();
     return before;
   }
 
@@ -297,7 +308,7 @@ Object.keys(SCHEMA_CASED).forEach((key) => {
 });
 
 interface CSSStyleDeclarationConstructor {
-  new (): CSSStyleDeclaration;
+  new (): CSSStyleDeclaration & CSSStyleDeclarationInternalInterface;
 }
 
 export const CSSStyleDeclaration =

@@ -59,9 +59,9 @@ export class Element
     this._tagName = tagName.toUpperCase();
 
     this._computedStyle = new ComputedStyle(this);
-    this._computedStyle.style._onUpdate = () => {
+    this._computedStyle.style._changedSignal.add(() => {
       this._setAttributeInternal('style', this._computedStyle.style.cssText);
-    };
+    });
     this._classList._updateSignal.add(() => {
       this._setAttributeInternal('class', this._classList.value);
     });

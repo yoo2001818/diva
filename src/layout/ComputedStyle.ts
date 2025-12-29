@@ -6,7 +6,7 @@ import { Element } from '../dom/Element';
 
 export class ComputedStyle {
   element: Element;
-  style: CSSStyleDeclaration = new CSSStyleDeclaration();
+  style = new CSSStyleDeclaration();
 
   constructor(element: Element) {
     this.element = element;
