@@ -1,5 +1,5 @@
 import { kebabize } from '../utils';
-import { BACKGROND_SCHEMA } from './background';
+import { BACKGROUND_SCHEMA } from './background';
 import { StyleSchemaEntry } from './base';
 import { BORDER_SCHEMA } from './border';
 import { OUTLINE_SCHEMA } from './outline';
@@ -7,7 +7,7 @@ import { POSITION_SCHEMA } from './position';
 import { TEXT_SCHEMA } from './text';
 
 export const SCHEMA = {
-  ...BACKGROND_SCHEMA,
+  ...BACKGROUND_SCHEMA,
   ...BORDER_SCHEMA,
   ...OUTLINE_SCHEMA,
   ...POSITION_SCHEMA,

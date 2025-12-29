@@ -199,7 +199,7 @@ export interface CSSStyleDict {
     'capitalize' | 'uppercase' | 'lowercase' | 'none' | 'inherit'
   >;
   verticalAlign: CSSVerticalAlign | CSSKeyword<'inherit'>;
-  visiblity: CSSKeyword<'visible' | 'hidden' | 'collapse' | 'inherit'>;
+  visibility: CSSKeyword<'visible' | 'hidden' | 'collapse' | 'inherit'>;
   whiteSpace: CSSKeyword<
     'normal' | 'pre' | 'nowrap' | 'pre-wrap' | 'pre-line' | 'inherit'
   >;
@@ -268,7 +268,7 @@ export const INITIAL_VALUES: CSSStyleDict = {
   textIndent: length0,
   textTransform: keyword('none'),
   verticalAlign: keyword('baseline'),
-  visiblity: keyword('visible'),
+  visibility: keyword('visible'),
   whiteSpace: keyword('normal'),
   wordSpacing: keyword('normal'),
   zIndex: keyword('auto'),

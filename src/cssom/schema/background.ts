@@ -6,7 +6,7 @@ import {
 } from './stringify';
 import { entry, shorthandEntry } from './base';
 
-export const BACKGROND_SCHEMA = {
+export const BACKGROUND_SCHEMA = {
   backgroundAttachment: entry(
     'backgroundAttachment',
     stringifyKeyword,

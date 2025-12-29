@@ -70,7 +70,7 @@ export const POSITION_SCHEMA = {
   position: entry('position', stringifyKeyword, (v) =>
     v.keyword('static', 'relative', 'absolute', 'fixed', 'inherit'),
   ),
-  visibility: entry('visiblity', stringifyKeyword, (v) =>
+  visibility: entry('visibility', stringifyKeyword, (v) =>
     v.keyword('visible', 'hidden', 'collapse', 'inherit'),
   ),
   zIndex: entry('zIndex', stringifyNumber, (v) =>
