@@ -1,7 +1,6 @@
 import { CSSStyleDeclaration } from './CSSStyleDeclaration';
 import { CSSStyleSheet } from './CSSStyleSheet';
 import { parse, Root, Rule } from 'postcss';
-import { schema } from './schema_old';
 
 export class CSSRule {
   _cssText: string = '';
@@ -37,7 +36,11 @@ export class CSSStyleRule extends CSSRule {
     this.selectorText = node.selector;
     node.nodes.forEach((node) => {
       if (node.type === 'decl') {
-        this.style[node.prop as keyof typeof schema] = node.value;
+        this.style.setProperty(
+          node.prop,
+          node.value,
+          node.important ? 'important' : '',
+        );
       }
     });
   }
