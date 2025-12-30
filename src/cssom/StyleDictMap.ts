@@ -1,15 +1,21 @@
 import { CSSStyleDict } from './dict';
+import { StyleDict, StyleDictRecord } from './StyleDict';
 
-export type StylePriority = 'important' | null;
-
-export interface StyleDictRecord<T = any> {
-  value: T;
-  priority: StylePriority;
-}
-
-export class StyleDictMap {
+export class StyleDictMap implements StyleDict {
   records: Map<keyof CSSStyleDict, StyleDictRecord<any>> = new Map();
 
+  get size(): number {
+    return this.records.size;
+  }
+  keys(): IterableIterator<keyof CSSStyleDict> {
+    return this.records.keys();
+  }
+  has<K extends keyof CSSStyleDict>(property: K): boolean {
+    return this.records.has(property);
+  }
+  clear(): void {
+    this.records.clear();
+  }
   get<K extends keyof CSSStyleDict>(
     property: K,
   ): StyleDictRecord<CSSStyleDict[K]> | null {

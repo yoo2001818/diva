@@ -2,7 +2,8 @@ import { Signal } from '../dom/Signal';
 import { CSSRule } from './CSSRule';
 import { CSSStyleDict } from './dict';
 import { SCHEMA, SCHEMA_CASED } from './schema';
-import { StyleDictMap, StylePriority } from './StyleDictMap';
+import { StyleDict, StylePriority } from './StyleDict';
+import { StyleDictMap } from './StyleDictMap';
 import { kebabize } from './utils';
 
 type SchemaKey = keyof typeof SCHEMA_CASED;
@@ -52,7 +53,7 @@ export type CSSStyleDeclaration = CSSStyleDeclarationInterface & {
 };
 
 export interface CSSStyleDeclarationInternalInterface {
-  _dictMap: StyleDictMap;
+  _dictMap: StyleDict;
   _changedSignal: Signal<[]>;
 }
 
@@ -60,7 +61,7 @@ class CSSStyleDeclarationImpl
   implements CSSStyleDeclarationInterface, CSSStyleDeclarationInternalInterface
 {
   [index: number]: string;
-  _dictMap: StyleDictMap = new StyleDictMap();
+  _dictMap: StyleDict = new StyleDictMap();
   _changedSignal = new Signal<[]>();
   private _namesCache: string[] = [];
   private _namesDirty = true;
@@ -76,7 +77,7 @@ class CSSStyleDeclarationImpl
   }
 
   private _ensureIndexProperties(): void {
-    const size = this._dictMap.records.size;
+    const size = this._dictMap.size;
     for (let i = this._indexCount; i < size; i += 1) {
       const index = i;
       Object.defineProperty(this, index, {
@@ -96,7 +97,7 @@ class CSSStyleDeclarationImpl
       return this._namesCache;
     }
     const names: string[] = [];
-    for (const name of this._dictMap.records.keys()) {
+    for (const name of this._dictMap.keys()) {
       const key = String(name);
       const schemaKey = resolveSchemaKey(key);
       names.push(kebabize(schemaKey ?? key));
@@ -108,8 +109,8 @@ class CSSStyleDeclarationImpl
   }
 
   get cssText(): string {
-    if (this._dictMap.records.size === 0) return '';
-    const order = Array.from(this._dictMap.records.keys());
+    if (this._dictMap.size === 0) return '';
+    const order = Array.from(this._dictMap.keys());
     if (order.length === 0) return '';
     const orderIndex = new Map<string, number>();
     for (let i = 0; i < order.length; i += 1) {
@@ -138,7 +139,7 @@ class CSSStyleDeclarationImpl
       const coverage: string[] = [];
       for (let j = 0; j < props.length; j += 1) {
         const prop = props[j];
-        if (!this._dictMap.records.has(prop as keyof CSSStyleDict)) continue;
+        if (!this._dictMap.has(prop as keyof CSSStyleDict)) continue;
         coverage.push(prop);
         const idx = orderIndex.get(prop);
         if (idx != null && idx < firstIndex) {
@@ -217,7 +218,7 @@ class CSSStyleDeclarationImpl
   }
 
   set cssText(value: string) {
-    this._dictMap.records.clear();
+    this._dictMap.clear();
     this._markNamesDirty();
     this._ensureIndexProperties();
     const input = value.trim();
@@ -242,7 +243,7 @@ class CSSStyleDeclarationImpl
   }
 
   get length(): number {
-    return this._dictMap.records.size;
+    return this._dictMap.size;
   }
 
   item(index: number): string {

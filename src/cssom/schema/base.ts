@@ -1,14 +1,14 @@
 import { CSSKeyword, CSSLength, CSSPercentage, CSSStyleDict } from '../dict';
 import { parse, Parser } from './parse';
 import { stringifySideShorthand, stringifySize } from './stringify';
-import { StyleDictMap, StyleDictRecord, StylePriority } from '../StyleDictMap';
+import { StyleDict, StyleDictRecord, StylePriority } from '../StyleDict';
 import { isDeepEqual } from '../utils';
 
 export interface StyleSchemaEntry {
-  get(map: StyleDictMap): string | null;
-  getPriority(map: StyleDictMap): StylePriority;
-  set(map: StyleDictMap, value: string, priority: StylePriority): void;
-  remove(map: StyleDictMap): void;
+  get(map: StyleDict): string | null;
+  getPriority(map: StyleDict): StylePriority;
+  set(map: StyleDict, value: string, priority: StylePriority): void;
+  remove(map: StyleDict): void;
   coalesceProperties?: string[];
 }
 
@@ -68,7 +68,7 @@ export function sizeEntry<
 }
 
 export function getPropertiesPriority<K extends keyof CSSStyleDict>(
-  map: StyleDictMap,
+  map: StyleDict,
   properties: K[],
 ): StylePriority | null {
   const priority = map.getPriority(properties[0]);
@@ -79,7 +79,7 @@ export function getPropertiesPriority<K extends keyof CSSStyleDict>(
 }
 
 export function getProperties<Ks extends (keyof CSSStyleDict)[]>(
-  map: StyleDictMap,
+  map: StyleDict,
   properties: Ks,
 ): { [K in keyof Ks]: CSSStyleDict[Ks[K]] } | null {
   const records = properties.map((prop) => map.get(prop));
@@ -129,7 +129,7 @@ export function shorthandEntry<Ks extends [] | (keyof CSSStyleDict)[]>(
 }
 
 export function getProperties2D<Ks extends (keyof CSSStyleDict)[][]>(
-  map: StyleDictMap,
+  map: StyleDict,
   properties: Ks,
 ): { [K in keyof Ks]: CSSStyleDict[Ks[K][0]] } | null {
   const records = properties.map((props) => props.map((prop) => map.get(prop)));
