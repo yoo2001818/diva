@@ -52,10 +52,15 @@ export type CSSStyleDeclaration = CSSStyleDeclarationInterface & {
   [key in keyof typeof SCHEMA_CASED]: string;
 };
 
-export interface CSSStyleDeclarationInternalInterface {
+interface CSSStyleDeclarationInternalInterface {
   _dictMap: StyleDict;
   _changedSignal: Signal<[]>;
 }
+
+export type CSSStyleDeclarationInternal = CSSStyleDeclarationInterface &
+  CSSStyleDeclarationInternalInterface & {
+    [key in keyof typeof SCHEMA_CASED]: string;
+  };
 
 class CSSStyleDeclarationImpl
   implements CSSStyleDeclarationInterface, CSSStyleDeclarationInternalInterface
@@ -309,7 +314,7 @@ Object.keys(SCHEMA_CASED).forEach((key) => {
 });
 
 interface CSSStyleDeclarationConstructor {
-  new (): CSSStyleDeclaration & CSSStyleDeclarationInternalInterface;
+  new (): CSSStyleDeclarationInternal;
 }
 
 export const CSSStyleDeclaration =

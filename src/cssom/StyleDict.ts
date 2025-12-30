@@ -10,6 +10,7 @@ export interface StyleDictRecord<T = any> {
 export interface StyleDict {
   get size(): number;
   keys(): IterableIterator<keyof CSSStyleDict>;
+  entries(): IterableIterator<[keyof CSSStyleDict, StyleDictRecord<any>]>;
   has<K extends keyof CSSStyleDict>(property: K): boolean;
   get<K extends keyof CSSStyleDict>(
     property: K,

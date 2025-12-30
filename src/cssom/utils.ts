@@ -4,6 +4,7 @@ import {
 } from '../dom/utils/selector';
 import { HTMLElement } from '../html/HTMLElement';
 import { parseSelectors } from '../parser/selector';
+import { StylePriority } from './StyleDict';
 
 export const kebabize = (str: string) =>
   str.replace(
@@ -32,4 +33,9 @@ export function getSpecificity(
 export function isDeepEqual(a: any, b: any): boolean {
   // FIXME: This is horrible
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+// a > b
+export function hasHigherPriority(a: StylePriority, b: StylePriority): boolean {
+  return a === 'important' && b !== 'important';
 }

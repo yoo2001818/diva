@@ -1,8 +1,10 @@
+import { Signal } from '../dom/Signal';
 import { parseCSSRules } from './CSSRule';
 import { CSSRuleList } from './CSSRuleList';
 
 export class CSSStyleSheet {
   cssRules: CSSRuleList = new CSSRuleList();
+  _updateSignal: Signal<[]> = new Signal();
 
   constructor(options: CSSStyleSheetInit = {}) {}
 
@@ -17,6 +19,7 @@ export class CSSStyleSheet {
     const rules = parseCSSRules(text);
     this.cssRules.splice(index, 0, ...rules);
     rules.forEach((rule) => (rule._parentStyleSheet = this));
+    this._updateSignal.emit();
     return index;
   }
 
@@ -26,6 +29,7 @@ export class CSSStyleSheet {
     }
     this.cssRules[index]._parentStyleSheet = null;
     this.cssRules.splice(index, 1);
+    this._updateSignal.emit();
   }
 
   replace(text: string): Promise<CSSStyleSheet> {

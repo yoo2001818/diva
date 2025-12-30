@@ -10,6 +10,9 @@ export class StyleDictMap implements StyleDict {
   keys(): IterableIterator<keyof CSSStyleDict> {
     return this.records.keys();
   }
+  entries(): IterableIterator<[keyof CSSStyleDict, StyleDictRecord<any>]> {
+    return this.records.entries();
+  }
   has<K extends keyof CSSStyleDict>(property: K): boolean {
     return this.records.has(property);
   }

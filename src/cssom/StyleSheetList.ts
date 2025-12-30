@@ -1,25 +1,41 @@
 import { Document } from '../dom/Document';
 import { HTMLCollectionImpl } from '../dom/HTMLCollection';
+import { RecursiveSignal } from '../dom/Signal';
 import { elementGetElementsByTagName } from '../dom/utils/element';
 import { HTMLStyleElement } from '../html/HTMLStyleElement';
 import { CSSStyleSheet } from './CSSStyleSheet';
 
 export class StyleSheetList extends Array<CSSStyleSheet> {
   _styleNodes: HTMLCollectionImpl;
+  _updateSignal: RecursiveSignal<[]>;
   constructor(document: Document) {
     super();
     this._styleNodes = elementGetElementsByTagName(document, 'STYLE');
     this._styleNodes._updateSignal.add(() => {
       this._update();
     });
+    this._updateSignal = new RecursiveSignal((listener) => {
+      const signals = this.map((sheet) => {
+        sheet._updateSignal.add(() => listener);
+        return sheet._updateSignal;
+      });
+      return () => {
+        signals.forEach((signal) => {
+          signal.delete(listener);
+        });
+      };
+    });
   }
   _update(): void {
     this.length = 0;
+    this._updateSignal._unregister();
     this.push(
       ...this._styleNodes
         .filter((node) => node instanceof HTMLStyleElement)
         .map((node) => node.sheet),
     );
+    this._updateSignal._register();
+    this._updateSignal.emit();
   }
   item(index: number): CSSStyleSheet | null {
     return this[index] ?? null;
