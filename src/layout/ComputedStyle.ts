@@ -1,15 +1,16 @@
-import { CSSStyleRule } from '../cssom/CSSRule';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { CSSKeyword, CSSLength, CSSStyleDict } from '../cssom/dict';
-import { getSpecificity } from '../cssom/utils';
+import { StyleDictCascaded } from '../cssom/StyleDictCascaded';
 import { Element } from '../dom/Element';
 
 export class ComputedStyle {
   element: Element;
   style = new CSSStyleDeclaration();
+  cascadedDict: StyleDictCascaded;
 
   constructor(element: Element) {
     this.element = element;
+    this.cascadedDict = new StyleDictCascaded(this.style._dictMap, element);
   }
 
   /**
@@ -57,34 +58,14 @@ export class ComputedStyle {
     }
   }
 
-  _getRaw(key: any) {
-    const rules: { rule: CSSStyleRule; specificity: number }[] = [];
-    const styleSheets = this.element.ownerDocument!.styleSheets;
-    for (const sheet of styleSheets) {
-      for (const rule of sheet.cssRules) {
-        if (rule instanceof CSSStyleRule) {
-          if (this.element.matches(rule.selectorText)) {
-            // Parse the selector, retrieve specificity
-            const specificity = getSpecificity(this.element, rule.selectorText);
-            rules.push({ rule, specificity });
-          }
-        }
-      }
-    }
-    rules.sort((a, b) => b.specificity - a.specificity);
-    for (const { rule } of rules) {
-      // FIXME: _getRaw always returns a valid value by default
-      const result = rule.style._getRaw(key);
-      if (result != null) {
-        return result;
-      }
-    }
-  }
-
   get<K extends keyof CSSStyleDict>(
     key: K,
   ): Exclude<CSSStyleDict[K], CSSKeyword<'inherit'>> {
-    const value = this.style._getRaw(key);
+    const value = this.cascadedDict.getValue(key);
+    if (value == null) {
+      // Use browser default
+      throw new Error('Not implemented yet');
+    }
     if (!Array.isArray(value)) {
       if (value.type === 'inherit') {
         const parent = this.element.parentElement!;

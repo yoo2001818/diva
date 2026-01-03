@@ -16,6 +16,15 @@ export class StyleDictCascaded implements StyleDict {
     this.elementStyle = elementStyle;
     this.element = element;
     this.affectedRules = [];
+    const styleSheets = element.ownerDocument!.styleSheets;
+    styleSheets._updateSignal.add(() => {
+      // TODO: This needs to be removed when the element is deleted..
+      this.cachedDirty = true;
+    });
+    this.element._computedStyle.style._changedSignal.add(() => {
+      // TODO: This needs to be removed when the element is deleted..
+      this.cachedDirty = true;
+    });
   }
 
   _updateRuleList(): void {
@@ -34,10 +43,12 @@ export class StyleDictCascaded implements StyleDict {
     }
     rules.sort((a, b) => b.specificity - a.specificity);
     this.affectedRules = rules.map((v) => v.rule);
-    // FIXME: invalidate signal is missing
   }
 
   _updateMap(): void {
+    if (!this.cachedDirty) {
+      return;
+    }
     this._updateRuleList();
     this.cachedMap.clear();
     // Walk every rule and store each map
@@ -53,6 +64,7 @@ export class StyleDictCascaded implements StyleDict {
         }
       }
     }
+    this.cachedDirty = false;
   }
 
   get size(): number {
