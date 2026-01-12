@@ -1,16 +1,19 @@
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { CSSKeyword, CSSLength, CSSStyleDict } from '../cssom/dict';
 import { StyleDictCascaded } from '../cssom/StyleDictCascaded';
+import { StyleDictInherited } from '../cssom/StyleDictInherited';
 import { Element } from '../dom/Element';
 
 export class ComputedStyle {
   element: Element;
   style = new CSSStyleDeclaration();
   cascadedDict: StyleDictCascaded;
+  inheritedDict: StyleDictInherited;
 
   constructor(element: Element) {
     this.element = element;
     this.cascadedDict = new StyleDictCascaded(this.style._dictMap, element);
+    this.inheritedDict = new StyleDictInherited(this.cascadedDict, element);
   }
 
   /**
