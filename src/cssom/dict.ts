@@ -100,15 +100,6 @@ export type CSSVerticalAlign =
   | CSSPercentage
   | CSSLength;
 
-function keyword<T extends string>(type: T): CSSKeyword<T> {
-  return { type };
-}
-function identifier(value: string): CSSIndentifier {
-  return { type: 'identifier', value };
-}
-const length0: CSSLength = { type: 'length', value: 0 };
-const colorDefault: CSSColor = { type: 'hash', value: '000000' };
-
 export interface CSSStyleDict {
   backgroundAttachment: CSSKeyword<'scroll' | 'fixed' | 'inherit'>;
   backgroundColor: CSSColor | CSSKeyword<'inherit'>;
@@ -206,70 +197,3 @@ export interface CSSStyleDict {
   wordSpacing: CSSKeyword<'normal' | 'inherit'> | CSSLength;
   zIndex: CSSKeyword<'auto' | 'inherit'> | CSSNumber;
 }
-
-export const INITIAL_VALUES: CSSStyleDict = {
-  backgroundAttachment: keyword('scroll'),
-  backgroundColor: identifier('transparent'),
-  backgroundImage: keyword('none'),
-  backgroundPositionX: { type: 'percentage', value: 0 },
-  backgroundPositionY: { type: 'percentage', value: 0 },
-  backgroundRepeat: keyword('repeat'),
-  borderCollapse: keyword('separate'),
-  borderTopColor: colorDefault,
-  borderTopStyle: keyword('none'),
-  // FIXME: The standard is "medium"
-  borderTopWidth: length0,
-  borderRightColor: colorDefault,
-  borderRightStyle: keyword('none'),
-  borderRightWidth: length0,
-  borderBottomColor: colorDefault,
-  borderBottomStyle: keyword('none'),
-  borderBottomWidth: length0,
-  borderLeftColor: colorDefault,
-  borderLeftStyle: keyword('none'),
-  borderLeftWidth: length0,
-  top: keyword('auto'),
-  right: keyword('auto'),
-  bottom: keyword('auto'),
-  left: keyword('auto'),
-  clear: keyword('none'),
-  color: colorDefault,
-  direction: keyword('ltr'),
-  display: keyword('inline'),
-  float: keyword('none'),
-  fontFamily: [identifier('sans-serif')],
-  fontSize: keyword('medium'),
-  fontStyle: keyword('normal'),
-  fontVariant: keyword('normal'),
-  fontWeight: keyword('normal'),
-  width: keyword('auto'),
-  height: keyword('auto'),
-  minWidth: length0,
-  minHeight: length0,
-  maxWidth: keyword('none'),
-  maxHeight: keyword('none'),
-  letterSpacing: keyword('normal'),
-  lineHeight: keyword('normal'),
-  paddingTop: length0,
-  paddingRight: length0,
-  paddingBottom: length0,
-  paddingLeft: length0,
-  marginTop: length0,
-  marginRight: length0,
-  marginBottom: length0,
-  marginLeft: length0,
-  outlineColor: keyword('invert'),
-  outlineStyle: keyword('none'),
-  outlineWidth: keyword('medium'),
-  overflow: keyword('visible'),
-  position: keyword('static'),
-  textAlign: keyword('left'),
-  textDecoration: [],
-  textIndent: length0,
-  textTransform: keyword('none'),
-  verticalAlign: keyword('baseline'),
-  visibility: keyword('visible'),
-  whiteSpace: keyword('normal'),
-  wordSpacing: keyword('normal'),
-  zIndex: keyword('auto'),
-};
