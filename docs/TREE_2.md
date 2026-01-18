@@ -140,3 +140,86 @@ functions like an annotation, not an actual node.
 This suggests that, even block formatting contexts aren't free from dealing with
 this "walker" - it needs to drill down inline nodes, while keeping the block
 nodes.
+
+Judging by this requirement, I think it'd be favorable to create a "walker"
+class with this shape:
+
+```ts
+type WalkerItem =
+  | { type: 'start'; stack: Element[]; element: Element }
+  | { type: 'end'; stack: Element[]; element: Element }
+  | { type: 'text'; stack: Element[]; text: Text; index: number };
+
+interface Walker {
+  peek(): WalkerItem | null;
+  consume(drillDown: boolean): void;
+  consumeText(length: string): void;
+}
+```
+
+Which, can be used like this to walk the tree and generate layout boxes:
+
+- 0 BFC: (start, div) enter BFC (with new Walker)
+- 0.0 BFC: (text, "Hello, ") create inline box, (don't consume), enter IFC
+- 0.0.0 IFC: (text, "Hello, ") create line box, (don't consume), enter line
+- 0.0.0.0 Line: (text, "Hello, ") create text run, (consume all letters)
+- 0.0.0.1 Line: (start, strong) create inline start marker, (consume, drill down)
+- 0.0.0.2 Line: (text, "world!") create text run, (consume all letters)
+- 0.0.0.3 Line: (start, div) exit line (don't consume)
+- 0.0.1 IFC: (start, div) exit IFC (don't consume)
+- 0.1 BFC: (start, div) create block node, (consume), enter BFC (with new Walker inside)
+- 0.1.0 BFC2: (text, "And this is a line.") create inline box, (don't consume), enter IFC
+- 0.1.0.0 IFC: (text, "And this is a line.") create line box, (don't consume), enter line
+- 0.1.0.0.0 Line: (text, "And this is a line.") create text run, (consume all letters)
+- 0.1.0.0.1 Line: (null) exit line (don't consume)
+- 0.1.0.1 IFC: (null) exit IFC (don't consume)
+- 0.1.1 BFC2: (null) exit BFC (consume)
+- 0.2 BFC: (text, "You shouldn't do this.") create inline box, (don't consume), enter IFC
+- 0.2.0 IFC: (text, "You shouldn't do this.") create line box, (don't consume), enter line
+- 0.2.0.0 Line: (text, "You shouldn't do this.") create text run, (consume all letters)
+- 0.2.0.1 Line: (end, strong) create inline end marker (consume)
+- 0.2.0.2 Line: (text, "Probably.") create text run, (consume all letters)
+- 0.2.0.3 Line: (null) exit line (don't consume)
+- 0.2.1 IFC: (null) exit IFC (don't consume)
+- 0.3 BFC: (null) exit BFC (consume)
+
+It's so verbose. But as you can see, walkers are simply necessary to implement
+inline boxes, while allowing interleaving inline and block nodes.
+
+Using this Walker structure, it would be a whole lot easier to implement BFC/IFC
+logic. Layouting is yet another beast to tame, but at least it can be used to
+create a layout tree that correctly represents how it should be displayed.
+
+## Position
+
+Also, I haven't even thought about `display: none`, `position: absolute` and
+other sadness I need to deal with. `display: none` is literally nothing, so
+it's fine - but what about `position: absolute`? Where does it even reside in
+the layout tree? What's more troubling is that if no `top`, `left`, ... are
+specified, absolute nodes must be placed on where it should reside if the
+position is static. So it isn't completely "outside" of the layout tree as well.
+
+However, this is outside the scope of a layout tree - it should be determined
+while actually determining positions of each node, and that absolute elements
+can be seen as an element that takes the position, but doesn't contribute to the
+sizing whatsoever.
+
+... That is to say, let's think about this again when I actually finish building
+the layout tree.
+
+## Layout
+
+Let's say that the app finished building a layout tree. How would it actually
+fill out position and size information? Also: as you can see from the presence
+of line boxes, inline formatting contexts can be freely change its composition
+depending its width. I think it's best to approach it first without implementing
+line wraps, as that would bring the font horror and it's mostly self
+contained inside IFCs.
+
+I haven't looked it up precisely, but CSS actually requires to determine the
+"fit-content" size even in CSS 2.1, when `position: absolute` is specified. Or
+`inline-block`. That is, "just keep adding content without thinking about line
+wraps" is actually necessary to determine the parent's width. So this approach
+could work for initial implementation.
+
+To be continued...
