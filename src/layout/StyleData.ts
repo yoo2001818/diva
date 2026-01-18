@@ -4,6 +4,7 @@ import { layoutBlocks } from './FormattingContext';
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { ComputedStyle } from './ComputedStyle';
 
+// FIXME: This is an old residue; this should be removed entirely
 export class StyleData {
   node: Element;
   style: CSSStyleDeclaration;
