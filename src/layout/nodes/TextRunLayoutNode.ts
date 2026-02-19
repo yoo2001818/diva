@@ -10,6 +10,8 @@ export class TextRunLayoutNode extends LayoutNode {
   inlineStack: Element[];
   ascent: number | null = null;
   descent: number | null = null;
+  actualAscent: number | null = null;
+  actualDescent: number | null = null;
   fontSize: number | null = null;
 
   constructor(

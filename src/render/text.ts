@@ -30,7 +30,7 @@ export function resolveTextPaintInstruction(
     return {
       text: node.text,
       x: node.box.outerBox.left,
-      y: node.box.outerBox.top,
+      y: node.box.outerBox.top + node.box.outerBox.height * 0.8,
       font: DEFAULT_FONT_DECLARATION,
       fillStyle: '#000000',
     };
@@ -40,11 +40,15 @@ export function resolveTextPaintInstruction(
   const font = buildFontDeclaration(computed);
   const color = mapColor(computed.get('color') as CSSColor);
 
-  let y = node.box.outerBox.top + (node.box.outerBox.height - font.fontSize) / 2;
-  if (node.ascent != null && node.descent != null) {
+  let y = node.box.outerBox.top + font.fontSize * 0.8;
+  if (node.actualAscent != null && node.actualDescent != null) {
+    const glyphHeight = node.actualAscent + node.actualDescent;
+    const leading = Math.max(0, node.box.outerBox.height - glyphHeight);
+    y = node.box.outerBox.top + leading / 2 + node.actualAscent;
+  } else if (node.ascent != null && node.descent != null) {
     const glyphHeight = node.ascent + node.descent;
     const leading = Math.max(0, node.box.outerBox.height - glyphHeight);
-    y = node.box.outerBox.top + leading / 2;
+    y = node.box.outerBox.top + leading / 2 + node.ascent;
   }
 
   return {

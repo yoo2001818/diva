@@ -20,7 +20,8 @@ function createBlock(document: Document, tagName: string = 'div') {
 
 function getInlineBoxes(root: BlockLayoutNode): InlineBoxLayoutNode[] {
   return root.children.filter(
-    (child): child is InlineBoxLayoutNode => child instanceof InlineBoxLayoutNode,
+    (child): child is InlineBoxLayoutNode =>
+      child instanceof InlineBoxLayoutNode,
   );
 }
 
@@ -32,7 +33,9 @@ function getBlockChildren(root: BlockLayoutNode): BlockLayoutNode[] {
 
 function flattenText(line: LineBoxLayoutNode): string {
   return line.children
-    .filter((child): child is TextRunLayoutNode => child instanceof TextRunLayoutNode)
+    .filter(
+      (child): child is TextRunLayoutNode => child instanceof TextRunLayoutNode,
+    )
     .map((child) => child.text)
     .join('');
 }
@@ -47,7 +50,9 @@ function firstTextRun(line: LineBoxLayoutNode): TextRunLayoutNode | null {
   return null;
 }
 
-function firstInlineBlock(line: LineBoxLayoutNode): InlineBlockLayoutNode | null {
+function firstInlineBlock(
+  line: LineBoxLayoutNode,
+): InlineBlockLayoutNode | null {
   for (let i = 0; i < line.children.length; i += 1) {
     const child = line.children[i];
     if (child instanceof InlineBlockLayoutNode) {
@@ -62,7 +67,9 @@ function inlineBlockMarginTop(node: InlineBlockLayoutNode): number {
 }
 
 function inlineBlockMarginBottom(node: InlineBlockLayoutNode): number {
-  return node.box.outerBox.top + node.box.outerBox.height + node.box.margin.bottom;
+  return (
+    node.box.outerBox.top + node.box.outerBox.height + node.box.margin.bottom
+  );
 }
 
 function textRunBaseline(node: TextRunLayoutNode): number {
@@ -73,11 +80,35 @@ function textRunBaseline(node: TextRunLayoutNode): number {
   return node.box.outerBox.top + leading / 2 + ascent;
 }
 
+function lineContentRight(line: LineBoxLayoutNode): number {
+  let right = line.box.outerBox.left;
+  for (let i = 0; i < line.children.length; i += 1) {
+    const child = line.children[i];
+    const childRight = child.box.outerBox.left + child.box.outerBox.width;
+    if (childRight > right) {
+      right = childRight;
+    }
+  }
+  return right;
+}
+
 function collectNodes(root: LayoutNode): LayoutNode[] {
   const out: LayoutNode[] = [root];
   const children = root.getChildren();
   for (let i = 0; i < children.length; i += 1) {
     out.push(...collectNodes(children[i]));
+  }
+  return out;
+}
+
+function collectTextRuns(root: LayoutNode): TextRunLayoutNode[] {
+  const out: TextRunLayoutNode[] = [];
+  if (root instanceof TextRunLayoutNode) {
+    out.push(root);
+  }
+  const children = root.getChildren();
+  for (let i = 0; i < children.length; i += 1) {
+    out.push(...collectTextRuns(children[i]));
   }
   return out;
 }
@@ -163,6 +194,216 @@ test('white-space pre preserves newline breaks', () => {
   expect(flattenText(inline.children[2])).toBe('C');
 });
 
+test('br forces line break in inline formatting context', () => {
+  const document = new Document();
+  const root = createBlock(document, 'div');
+  root.style.width = '220px';
+
+  const br = document.createElement('br');
+  root.append('line one', br, 'line two');
+
+  const engine = new LayoutEngine();
+  const layout = engine.layout(root, { width: 300, height: 220 });
+  const inline = getInlineBoxes(layout.root!)[0];
+  expect(inline.children.length).toBe(2);
+  expect(flattenText(inline.children[0])).toContain('line one');
+  expect(flattenText(inline.children[1])).toContain('line two');
+});
+
+test('inline start/end markers reserve edge width from border and padding', () => {
+  const document = new Document();
+  const root = createBlock(document, 'div');
+  root.style.width = '300px';
+
+  const span = document.createElement('span');
+  span.style.display = 'inline';
+  span.style.paddingLeft = '4px';
+  span.style.paddingRight = '6px';
+  span.style.borderLeft = '2px solid #000';
+  span.style.borderRight = '3px solid #000';
+  span.append('X');
+  root.append(span);
+
+  const engine = new LayoutEngine();
+  const layout = engine.layout(root, { width: 320, height: 140 });
+  const line = getInlineBoxes(layout.root!)[0].children[0];
+
+  const start = line.children.find(
+    (child): child is InlineStartMarkerLayoutNode =>
+      child instanceof InlineStartMarkerLayoutNode && child.domNode === span,
+  );
+  const end = line.children.find(
+    (child): child is InlineEndMarkerLayoutNode =>
+      child instanceof InlineEndMarkerLayoutNode && child.domNode === span,
+  );
+
+  expect(start).toBeTruthy();
+  expect(end).toBeTruthy();
+  expect(start!.box.outerBox.width).toBe(6);
+  expect(end!.box.outerBox.width).toBe(9);
+});
+
+test('inline markers do not inflate line height', () => {
+  const document = new Document();
+
+  const plainRoot = createBlock(document, 'div');
+  plainRoot.style.width = '320px';
+  plainRoot.append('plain inline text');
+
+  const decoratedRoot = createBlock(document, 'div');
+  decoratedRoot.style.width = '320px';
+  const span = document.createElement('span');
+  span.style.display = 'inline';
+  span.style.border = '2px solid #000';
+  span.style.padding = '0 6px';
+  span.append('plain inline text');
+  decoratedRoot.append(span);
+
+  const engine = new LayoutEngine();
+  const plainLayout = engine.layout(plainRoot, { width: 340, height: 200 });
+  const decoratedLayout = engine.layout(decoratedRoot, { width: 340, height: 200 });
+
+  const plainLine = getInlineBoxes(plainLayout.root!)[0].children[0];
+  const decoratedLine = getInlineBoxes(decoratedLayout.root!)[0].children[0];
+
+  expect(Math.abs(plainLine.box.outerBox.height - decoratedLine.box.outerBox.height)).toBeLessThan(0.01);
+});
+
+test('line-height zero keeps text-only line boxes at zero height', () => {
+  const document = new Document();
+  const root = createBlock(document, 'div');
+  root.style.width = '80px';
+  root.style.lineHeight = '0px';
+  root.append('word word word word');
+
+  const engine = new LayoutEngine();
+  const layout = engine.layout(root, { width: 200, height: 200 });
+  const inline = getInlineBoxes(layout.root!)[0];
+  expect(inline.children.length).toBeGreaterThan(1);
+
+  const firstTop = inline.children[0].box.outerBox.top;
+  for (let i = 0; i < inline.children.length; i += 1) {
+    expect(Math.abs(inline.children[i].box.outerBox.height)).toBeLessThan(0.01);
+    expect(Math.abs(inline.children[i].box.outerBox.top - firstTop)).toBeLessThan(0.01);
+  }
+});
+
+test('line-height zero still expands for inline-block items', () => {
+  const document = new Document();
+  const root = createBlock(document, 'div');
+  root.style.width = '320px';
+  root.style.lineHeight = '0px';
+
+  const chip = document.createElement('span');
+  chip.style.display = 'inline-block';
+  chip.style.width = '30px';
+  chip.style.height = '24px';
+
+  root.append('a ', chip, ' b');
+
+  const engine = new LayoutEngine();
+  const layout = engine.layout(root, { width: 400, height: 200 });
+  const line = getInlineBoxes(layout.root!)[0].children[0];
+
+  expect(line.box.outerBox.height).toBeGreaterThanOrEqual(24);
+});
+
+test('text-align right shifts inline content to the right edge', () => {
+  const document = new Document();
+  const leftRoot = createBlock(document, 'div');
+  leftRoot.style.width = '300px';
+  leftRoot.style.textAlign = 'left';
+  leftRoot.style.whiteSpace = 'nowrap';
+  leftRoot.append('align me');
+
+  const rightRoot = createBlock(document, 'div');
+  rightRoot.style.width = '300px';
+  rightRoot.style.textAlign = 'right';
+  rightRoot.style.whiteSpace = 'nowrap';
+  rightRoot.append('align me');
+
+  const engine = new LayoutEngine();
+  const leftLayout = engine.layout(leftRoot, { width: 400, height: 200 });
+  const rightLayout = engine.layout(rightRoot, { width: 400, height: 200 });
+  const leftLine = getInlineBoxes(leftLayout.root!)[0].children[0];
+  const rightLine = getInlineBoxes(rightLayout.root!)[0].children[0];
+  const leftRun = firstTextRun(leftLine)!;
+  const rightRun = firstTextRun(rightLine)!;
+
+  expect(rightRun.box.outerBox.left).toBeGreaterThan(leftRun.box.outerBox.left);
+  expect(
+    Math.abs(
+      lineContentRight(rightLine) -
+        (rightLine.box.outerBox.left + rightLine.box.outerBox.width),
+    ),
+  ).toBeLessThan(0.01);
+});
+
+test('text-align center positions inline content in the middle', () => {
+  const document = new Document();
+  const leftRoot = createBlock(document, 'div');
+  leftRoot.style.width = '300px';
+  leftRoot.style.textAlign = 'left';
+  leftRoot.style.whiteSpace = 'nowrap';
+  leftRoot.append('center me');
+
+  const centerRoot = createBlock(document, 'div');
+  centerRoot.style.width = '300px';
+  centerRoot.style.textAlign = 'center';
+  centerRoot.style.whiteSpace = 'nowrap';
+  centerRoot.append('center me');
+
+  const engine = new LayoutEngine();
+  const leftLayout = engine.layout(leftRoot, { width: 400, height: 200 });
+  const centerLayout = engine.layout(centerRoot, { width: 400, height: 200 });
+  const leftLine = getInlineBoxes(leftLayout.root!)[0].children[0];
+  const centerLine = getInlineBoxes(centerLayout.root!)[0].children[0];
+  const leftRun = firstTextRun(leftLine)!;
+  const centerRun = firstTextRun(centerLine)!;
+  const leftContentWidth =
+    lineContentRight(leftLine) - leftLine.box.outerBox.left;
+
+  expect(centerRun.box.outerBox.left).toBeGreaterThan(
+    leftRun.box.outerBox.left,
+  );
+  expect(
+    Math.abs(
+      centerRun.box.outerBox.left -
+        (centerLine.box.outerBox.left +
+          (centerLine.box.outerBox.width - leftContentWidth) / 2),
+    ),
+  ).toBeLessThan(0.5);
+});
+
+test('text-align justify expands spaces on non-last wrapped lines', () => {
+  const document = new Document();
+  const leftRoot = createBlock(document, 'div');
+  leftRoot.style.width = '180px';
+  leftRoot.style.textAlign = 'left';
+  leftRoot.append('one two three four five six seven eight nine');
+
+  const justifyRoot = createBlock(document, 'div');
+  justifyRoot.style.width = '180px';
+  justifyRoot.style.textAlign = 'justify';
+  justifyRoot.append('one two three four five six seven eight nine');
+
+  const engine = new LayoutEngine();
+  const leftLayout = engine.layout(leftRoot, { width: 250, height: 300 });
+  const justifyLayout = engine.layout(justifyRoot, { width: 250, height: 300 });
+  const leftLine = getInlineBoxes(leftLayout.root!)[0].children[0];
+  const justifyLine = getInlineBoxes(justifyLayout.root!)[0].children[0];
+
+  expect(lineContentRight(justifyLine)).toBeGreaterThan(
+    lineContentRight(leftLine),
+  );
+  expect(
+    Math.abs(
+      lineContentRight(justifyLine) -
+        (justifyLine.box.outerBox.left + justifyLine.box.outerBox.width),
+    ),
+  ).toBeLessThan(1);
+});
+
 test('inline boxes default to transparent background', () => {
   const document = new Document();
   const root = createBlock(document, 'div');
@@ -201,7 +442,8 @@ test('vertical-align top and bottom align to line box edges', () => {
   const layout = engine.layout(root, { width: 500, height: 200 });
   const line = getInlineBoxes(layout.root!)[0].children[0];
   const [first, second] = line.children.filter(
-    (child): child is InlineBlockLayoutNode => child instanceof InlineBlockLayoutNode,
+    (child): child is InlineBlockLayoutNode =>
+      child instanceof InlineBlockLayoutNode,
   );
   expect(first).toBeTruthy();
   expect(second).toBeTruthy();
@@ -209,7 +451,9 @@ test('vertical-align top and bottom align to line box edges', () => {
   const lineTop = line.box.outerBox.top;
   const lineBottom = line.box.outerBox.top + line.box.outerBox.height;
   expect(Math.abs(inlineBlockMarginTop(first) - lineTop)).toBeLessThan(0.01);
-  expect(Math.abs(inlineBlockMarginBottom(second) - lineBottom)).toBeLessThan(0.01);
+  expect(Math.abs(inlineBlockMarginBottom(second) - lineBottom)).toBeLessThan(
+    0.01,
+  );
 });
 
 test('baseline text runs with same style keep a stable top and baseline', () => {
@@ -233,7 +477,9 @@ test('baseline text runs with same style keep a stable top and baseline', () => 
   const firstBaseline = textRunBaseline(runs[0]);
   for (let i = 1; i < runs.length; i += 1) {
     expect(Math.abs(runs[i].box.outerBox.top - firstTop)).toBeLessThan(0.01);
-    expect(Math.abs(textRunBaseline(runs[i]) - firstBaseline)).toBeLessThan(0.01);
+    expect(Math.abs(textRunBaseline(runs[i]) - firstBaseline)).toBeLessThan(
+      0.01,
+    );
   }
 });
 
@@ -265,13 +511,24 @@ test('vertical-align middle/sub/super apply expected vertical direction shifts',
   subSpan.style.height = '20px';
   subSpan.style.verticalAlign = 'sub';
 
-  root.append('x ', baselineSpan, ' ', middleSpan, ' ', superSpan, ' ', subSpan, ' y');
+  root.append(
+    'x ',
+    baselineSpan,
+    ' ',
+    middleSpan,
+    ' ',
+    superSpan,
+    ' ',
+    subSpan,
+    ' y',
+  );
 
   const engine = new LayoutEngine();
   const layout = engine.layout(root, { width: 500, height: 200 });
   const line = getInlineBoxes(layout.root!)[0].children[0];
   const nodes = line.children.filter(
-    (child): child is InlineBlockLayoutNode => child instanceof InlineBlockLayoutNode,
+    (child): child is InlineBlockLayoutNode =>
+      child instanceof InlineBlockLayoutNode,
   );
   const baselineTop = inlineBlockMarginTop(nodes[0]);
   const middleTop = inlineBlockMarginTop(nodes[1]);
@@ -311,7 +568,8 @@ test('vertical-align length and percentage shift baseline upward for positive va
   const layout = engine.layout(root, { width: 500, height: 200 });
   const line = getInlineBoxes(layout.root!)[0].children[0];
   const nodes = line.children.filter(
-    (child): child is InlineBlockLayoutNode => child instanceof InlineBlockLayoutNode,
+    (child): child is InlineBlockLayoutNode =>
+      child instanceof InlineBlockLayoutNode,
   );
   const baselineTop = inlineBlockMarginTop(nodes[0]);
   const lengthTop = inlineBlockMarginTop(nodes[1]);
@@ -347,7 +605,8 @@ test('vertical-align text-top and text-bottom align opposite edges around baseli
   const line = getInlineBoxes(layout.root!)[0].children[0];
   const run = firstTextRun(line)!;
   const [textTopNode, textBottomNode] = line.children.filter(
-    (child): child is InlineBlockLayoutNode => child instanceof InlineBlockLayoutNode,
+    (child): child is InlineBlockLayoutNode =>
+      child instanceof InlineBlockLayoutNode,
   );
   const baseline = textRunBaseline(run);
 
@@ -377,7 +636,8 @@ test('inline-block baseline uses last internal line baseline when present', () =
 
   const nestedInline = getInlineBoxes(ib.block!)[0];
   const nestedLine = nestedInline.children[nestedInline.children.length - 1];
-  const nestedBaseline = nestedLine.box.outerBox.top + nestedLine.baselineOffset;
+  const nestedBaseline =
+    nestedLine.box.outerBox.top + nestedLine.baselineOffset;
   const outerBaseline = textRunBaseline(run);
 
   expect(Math.abs(nestedBaseline - outerBaseline)).toBeLessThan(1);
@@ -424,7 +684,9 @@ test('float left shifts active lines to the right and releases below float', () 
 
   const engine = new LayoutEngine();
   const layout = engine.layout(root, { width: 180, height: 300 });
-  const floatNode = getBlockChildren(layout.root!).find((child) => child.domNode === floater)!;
+  const floatNode = getBlockChildren(layout.root!).find(
+    (child) => child.domNode === floater,
+  )!;
   const inline = getInlineBoxes(layout.root!)[0];
   expect(inline.children.length).toBeGreaterThan(1);
 
@@ -458,12 +720,16 @@ test('float right reduces first line width from the right side', () => {
 
   const engine = new LayoutEngine();
   const layout = engine.layout(root, { width: 180, height: 250 });
-  const floatNode = getBlockChildren(layout.root!).find((child) => child.domNode === floater)!;
+  const floatNode = getBlockChildren(layout.root!).find(
+    (child) => child.domNode === floater,
+  )!;
   const inline = getInlineBoxes(layout.root!)[0];
   const firstLine = inline.children[0];
 
   expect(firstLine.box.outerBox.left).toBe(layout.root!.box.innerBox.left);
-  expect(firstLine.box.outerBox.width).toBeLessThan(layout.root!.box.innerBox.width);
+  expect(firstLine.box.outerBox.width).toBeLessThan(
+    layout.root!.box.innerBox.width,
+  );
   expect(firstLine.box.outerBox.left + firstLine.box.outerBox.width).toBe(
     marginLeft(floatNode),
   );
@@ -501,9 +767,9 @@ test('block child inline content avoids active left and right floats', () => {
   const firstLine = inline.children[0];
 
   expect(firstLine.box.outerBox.left).toBeGreaterThanOrEqual(marginRight(left));
-  expect(firstLine.box.outerBox.left + firstLine.box.outerBox.width).toBeLessThanOrEqual(
-    marginLeft(right),
-  );
+  expect(
+    firstLine.box.outerBox.left + firstLine.box.outerBox.width,
+  ).toBeLessThanOrEqual(marginLeft(right));
 });
 
 test('clear both block starts below both active floats', () => {
@@ -535,7 +801,9 @@ test('clear both block starts below both active floats', () => {
   const clear = blocks.find((node) => node.domNode === clearBlock)!;
 
   const clearTop = marginTop(clear);
-  expect(clearTop).toBeGreaterThanOrEqual(Math.max(marginBottom(left), marginBottom(right)));
+  expect(clearTop).toBeGreaterThanOrEqual(
+    Math.max(marginBottom(left), marginBottom(right)),
+  );
 });
 
 test('block text updates float avoidance per line when float heights differ', () => {
@@ -576,9 +844,9 @@ test('block text updates float avoidance per line when float heights differ', ()
 
   expect(firstLine.box.outerBox.left).toBeGreaterThanOrEqual(marginRight(left));
   expect(secondLine.box.outerBox.left).toBe(copy.box.innerBox.left);
-  expect(secondLine.box.outerBox.left + secondLine.box.outerBox.width).toBeLessThanOrEqual(
-    marginLeft(right),
-  );
+  expect(
+    secondLine.box.outerBox.left + secondLine.box.outerBox.width,
+  ).toBeLessThanOrEqual(marginLeft(right));
 });
 
 test('inline-block wraps with floats active', () => {
@@ -607,6 +875,41 @@ test('inline-block wraps with floats active', () => {
     (child) => child instanceof InlineBlockLayoutNode,
   );
   expect(firstLineHasInlineBlock).toBe(true);
+});
+
+test('inline-block internal text remains inside inline-block border box', () => {
+  const document = new Document();
+  const root = createBlock(document, 'div');
+  root.style.width = '360px';
+
+  const chip = document.createElement('span');
+  chip.style.display = 'inline-block';
+  chip.style.width = '120px';
+  chip.style.padding = '4px';
+  chip.style.border = '1px solid black';
+  chip.append('chip text');
+
+  root.append('before ', chip, ' after');
+
+  const engine = new LayoutEngine();
+  const layout = engine.layout(root, { width: 400, height: 200 });
+  const line = getInlineBoxes(layout.root!)[0].children[0];
+  const inlineBlock = firstInlineBlock(line);
+  expect(inlineBlock).toBeTruthy();
+  expect(inlineBlock!.block).toBeTruthy();
+
+  const runs = collectTextRuns(inlineBlock!.block!);
+  expect(runs.length).toBeGreaterThan(0);
+  const borderTop = inlineBlock!.box.outerBox.top;
+  const borderBottom =
+    inlineBlock!.box.outerBox.top + inlineBlock!.box.outerBox.height;
+
+  for (let i = 0; i < runs.length; i += 1) {
+    const top = runs[i].box.outerBox.top;
+    const bottom = runs[i].box.outerBox.top + runs[i].box.outerBox.height;
+    expect(top).toBeGreaterThanOrEqual(borderTop - 0.01);
+    expect(bottom).toBeLessThanOrEqual(borderBottom + 0.01);
+  }
 });
 
 test('long token overflows unsplit when line width is too small', () => {
@@ -642,40 +945,11 @@ test('marker continuity across wrapped lines', () => {
   const inline = getInlineBoxes(layout.root!)[0];
   expect(inline.children.length).toBeGreaterThan(1);
 
-  const firstLineLast = inline.children[0].children[inline.children[0].children.length - 1];
+  const firstLineLast =
+    inline.children[0].children[inline.children[0].children.length - 1];
   const secondLineFirst = inline.children[1].children[0];
-  expect(firstLineLast instanceof InlineEndMarkerLayoutNode).toBe(true);
-  expect(secondLineFirst instanceof InlineStartMarkerLayoutNode).toBe(true);
-  if (firstLineLast instanceof InlineEndMarkerLayoutNode) {
-    expect(firstLineLast.synthetic).toBe(true);
-  }
-  if (secondLineFirst instanceof InlineStartMarkerLayoutNode) {
-    expect(secondLineFirst.synthetic).toBe(true);
-  }
-});
-
-test('marker continuity across post-block resume', () => {
-  const document = new Document();
-  const root = createBlock(document, 'div');
-
-  const strong = document.createElement('strong');
-  strong.style.display = 'inline';
-  const nested = createBlock(document, 'div');
-  nested.append('block');
-  strong.append('a', nested, 'b');
-  root.append(strong);
-
-  const engine = new LayoutEngine();
-  const layout = engine.layout(root, { width: 300, height: 200 });
-  const inlineBoxes = getInlineBoxes(layout.root!);
-  expect(inlineBoxes.length).toBe(2);
-
-  const secondLine = inlineBoxes[1].children[0];
-  const firstItem = secondLine.children[0];
-  expect(firstItem instanceof InlineStartMarkerLayoutNode).toBe(true);
-  if (firstItem instanceof InlineStartMarkerLayoutNode) {
-    expect(firstItem.synthetic).toBe(true);
-  }
+  expect(firstLineLast instanceof InlineEndMarkerLayoutNode).toBe(false);
+  expect(secondLineFirst instanceof InlineStartMarkerLayoutNode).toBe(false);
 });
 
 test('collapses adjacent vertical margins between normal-flow block siblings', () => {
@@ -699,7 +973,8 @@ test('collapses adjacent vertical margins between normal-flow block siblings', (
   const firstNode = blocks.find((node) => node.domNode === first)!;
   const secondNode = blocks.find((node) => node.domNode === second)!;
 
-  const firstBorderBottom = firstNode.box.outerBox.top + firstNode.box.outerBox.height;
+  const firstBorderBottom =
+    firstNode.box.outerBox.top + firstNode.box.outerBox.height;
   const secondBorderTop = secondNode.box.outerBox.top;
   expect(secondBorderTop - firstBorderBottom).toBe(35);
 });
@@ -722,8 +997,12 @@ test('collapses parent and first child top margins when parent has no top border
 
   const engine = new LayoutEngine();
   const layout = engine.layout(root, { width: 240, height: 240 });
-  const parentNode = getBlockChildren(layout.root!).find((node) => node.domNode === parent)!;
-  const firstNode = getBlockChildren(parentNode).find((node) => node.domNode === first)!;
+  const parentNode = getBlockChildren(layout.root!).find(
+    (node) => node.domNode === parent,
+  )!;
+  const firstNode = getBlockChildren(parentNode).find(
+    (node) => node.domNode === first,
+  )!;
 
   expect(parentNode.box.outerBox.top - layout.root!.box.innerBox.top).toBe(35);
   expect(firstNode.box.outerBox.top).toBe(parentNode.box.outerBox.top);
@@ -754,7 +1033,8 @@ test('collapses parent and last child bottom margins and propagates outward', ()
   const siblingNode = blocks.find((node) => node.domNode === sibling)!;
 
   expect(parentNode.box.outerBox.height).toBe(10);
-  const parentBorderBottom = parentNode.box.outerBox.top + parentNode.box.outerBox.height;
+  const parentBorderBottom =
+    parentNode.box.outerBox.top + parentNode.box.outerBox.height;
   const siblingBorderTop = siblingNode.box.outerBox.top;
   expect(siblingBorderTop - parentBorderBottom).toBe(30);
 });

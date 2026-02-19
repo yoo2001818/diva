@@ -122,7 +122,7 @@ test('keeps inherited text style on wrapped runs', () => {
   }
 });
 
-test('uses measured ascent/descent for text paint y when available', () => {
+test('uses measured ascent/descent for alphabetic text baseline when available', () => {
   const document = new Document();
   const root = document.createElement('div');
   root.style.width = '300px';
@@ -138,7 +138,32 @@ test('uses measured ascent/descent for text paint y when available', () => {
   run!.box.outerBox.height = 30;
   run!.ascent = 12;
   run!.descent = 6;
+  run!.actualAscent = null;
+  run!.actualDescent = null;
 
   const instruction = resolveTextPaintInstruction(run!);
-  expect(instruction.y).toBe(16);
+  expect(instruction.y).toBe(28);
+});
+
+test('prefers actual ascent/descent for paint baseline when available', () => {
+  const document = new Document();
+  const root = document.createElement('div');
+  root.style.width = '300px';
+  root.style.fontSize = '20px';
+  root.append('Hello');
+
+  const engine = new LayoutEngine();
+  const layout = engine.layout(root, { width: 500, height: 200 });
+  const run = findFirstTextRun(layout.root);
+  expect(run).not.toBeNull();
+
+  run!.box.outerBox.top = 10;
+  run!.box.outerBox.height = 30;
+  run!.ascent = 15;
+  run!.descent = 7;
+  run!.actualAscent = 12;
+  run!.actualDescent = 5;
+
+  const instruction = resolveTextPaintInstruction(run!);
+  expect(instruction.y).toBe(28.5);
 });

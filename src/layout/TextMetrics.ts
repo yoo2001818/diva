@@ -15,6 +15,8 @@ export interface TextMetricsResult {
   height: number;
   ascent: number;
   descent: number;
+  actualAscent: number;
+  actualDescent: number;
 }
 
 export interface TextMetricsProvider {
@@ -32,6 +34,8 @@ export class DeterministicTextMetrics implements TextMetricsProvider {
       height,
       ascent,
       descent,
+      actualAscent: ascent,
+      actualDescent: descent,
     };
   }
 }
@@ -83,8 +87,18 @@ export class CanvasTextMetrics implements TextMetricsProvider {
       return this.fallback.measure(input);
     }
 
-    const ascent = measured.actualBoundingBoxAscent;
-    const descent = measured.actualBoundingBoxDescent;
+    const fontAscent = measured.fontBoundingBoxAscent;
+    const fontDescent = measured.fontBoundingBoxDescent;
+    const actualAscent = measured.actualBoundingBoxAscent;
+    const actualDescent = measured.actualBoundingBoxDescent;
+    const ascent =
+      Number.isFinite(fontAscent) && fontAscent > 0
+        ? fontAscent
+        : actualAscent;
+    const descent =
+      Number.isFinite(fontDescent) && fontDescent > 0
+        ? fontDescent
+        : actualDescent;
     const measuredHeight = ascent + descent;
     const height =
       Number.isFinite(measuredHeight) && measuredHeight > 0
@@ -96,12 +110,22 @@ export class CanvasTextMetrics implements TextMetricsProvider {
       Number.isFinite(ascent) && ascent > 0 ? ascent : fallback.ascent;
     const safeDescent =
       Number.isFinite(descent) && descent >= 0 ? descent : fallback.descent;
+    const safeActualAscent =
+      Number.isFinite(actualAscent) && actualAscent > 0
+        ? actualAscent
+        : safeAscent;
+    const safeActualDescent =
+      Number.isFinite(actualDescent) && actualDescent >= 0
+        ? actualDescent
+        : safeDescent;
 
     return {
       width,
       height,
       ascent: safeAscent,
       descent: safeDescent,
+      actualAscent: safeActualAscent,
+      actualDescent: safeActualDescent,
     };
   }
 }

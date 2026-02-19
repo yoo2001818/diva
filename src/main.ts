@@ -71,6 +71,21 @@ doc.documentElement!.innerHTML = `
   border: 1px solid #d1d5db;
   padding: 0 2px;
 }
+.inline-highlight {
+  background: #fde68a;
+}
+.inline-outline {
+  border: 1px solid #d97706;
+  padding: 0 4px;
+  background: #fef3c7;
+}
+.block-direct-text-case {
+  margin-top: 8px;
+  border: 2px solid #12ab34;
+  background: #eaffef;
+  color: #1f2937;
+  padding: 4px;
+}
 .inline-block-panel {
   background: #f5f3ff;
 }
@@ -160,6 +175,10 @@ doc.documentElement!.innerHTML = `
   margin-top: 12px;
   background: #fee2e2;
 }
+.inline-rich strong {
+  background-color: #ffff00;
+  border: 3px solid #000;
+}
 </style>
 <div class="demo-root">
   <div class="panel">
@@ -170,7 +189,7 @@ doc.documentElement!.innerHTML = `
     <div class="clear-both">This block has clear: both, so it starts below both floats.</div>
   </div>
 
-  <div class="panel nowrap-row">nowrap example: this line should remain in a single line even if the panel is not wide enough to fit all text naturally.</div>
+  <div class="panel nowrap-row">nowrap example: this line should remain in a single line even if the panel is not wide enough to fit all text naturally which should happen with some additional words.</div>
 
   <div class="panel pre-block">pre example:
   indentation is preserved
@@ -183,6 +202,12 @@ line breaks are explicit</div>
       Plain text,
       <strong>nested <em>inline emphasis</em> inside bold</strong>,
       and inline <code>code</code> should share one IFC with markers.
+      <strong>It should handle<br />line wraps correctly.</strong>
+      <strong><strong>nested span</strong></strong>
+      <span class="inline-highlight">background-only span</span>
+      and
+      <span class="inline-outline">border+padding span</span>
+      <div class="block-direct-text-case">Block direct text should not get inline decoration borders.</div>
     </div>
   </div>
 
@@ -247,6 +272,7 @@ line breaks are explicit</div>
 `;
 
 const canvasEl = document.createElement('canvas');
+canvasEl.id = 'engine-canvas';
 canvasEl.width = 1024;
 canvasEl.height = 1280;
 canvasEl.style.float = 'left';
@@ -256,7 +282,11 @@ const renderer = new CanvasRenderer(doc, canvasEl);
 renderer.layout();
 renderer.render();
 
+(window as any).__divaDoc = doc;
+(window as any).__divaRenderer = renderer;
+
 const compareContainer = document.createElement('div');
+compareContainer.id = 'browser-compare';
 compareContainer.style.width = '1024px';
 compareContainer.style.float = 'left';
 compareContainer.innerHTML = doc.documentElement!.innerHTML;

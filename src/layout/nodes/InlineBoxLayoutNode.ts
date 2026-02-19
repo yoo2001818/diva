@@ -1,4 +1,7 @@
 import {
+  CSSBorderStyle,
+  CSSKeyword,
+  CSSLength,
   CSSPercentage,
   CSSVerticalAlign,
 } from '../../cssom/dict';
@@ -57,6 +60,8 @@ interface MeasuredText {
   height: number;
   ascent: number;
   descent: number;
+  actualAscent: number;
+  actualDescent: number;
   fontSize: number;
   lineHeight: number;
 }
@@ -67,8 +72,11 @@ interface FontMetrics {
   font: string;
   ascent: number;
   descent: number;
-  height: number;
+  actualAscent: number;
+  actualDescent: number;
 }
+
+type TextAlignMode = 'left' | 'right' | 'center' | 'justify';
 
 export class InlineBoxLayoutNode extends LayoutNode {
   readonly domNode: Element;
@@ -113,8 +121,93 @@ export class InlineBoxLayoutNode extends LayoutNode {
     }
   }
 
+  private resolveTextAlignMode(): TextAlignMode {
+    const value = this.domNode._computedStyle.get('textAlign').type;
+    switch (value) {
+      case 'right':
+      case 'center':
+      case 'justify':
+        return value;
+      case 'left':
+      default:
+        return 'left';
+    }
+  }
+
+  private resolveSpacingValue(
+    value: CSSLength | CSSPercentage | CSSKeyword<'auto'>,
+    referenceWidth: number,
+  ): number {
+    switch (value.type) {
+      case 'length':
+        return value.value;
+      case 'percentage':
+        return referenceWidth * (value.value / 100);
+      default:
+        return 0;
+    }
+  }
+
+  private resolveBorderSideWidth(
+    styleSource: Element,
+    side: 'left' | 'right',
+  ): number {
+    const style = styleSource._computedStyle;
+    const styleKey = side === 'left' ? 'borderLeftStyle' : 'borderRightStyle';
+    const widthKey = side === 'left' ? 'borderLeftWidth' : 'borderRightWidth';
+    const borderStyle = style.get(styleKey) as CSSBorderStyle;
+    if (borderStyle.type === 'none' || borderStyle.type === 'hidden') {
+      return 0;
+    }
+    const borderWidth = style.get(widthKey) as CSSLength | CSSKeyword<string>;
+    if ('value' in borderWidth) {
+      return borderWidth.value;
+    }
+    switch (borderWidth.type) {
+      case 'thin':
+        return 1;
+      case 'medium':
+        return 3;
+      case 'thick':
+        return 5;
+      default:
+        return 0;
+    }
+  }
+
+  private resolveInlineEdgeWidth(
+    styleSource: Element,
+    side: 'left' | 'right',
+    referenceWidth: number,
+  ): number {
+    const style = styleSource._computedStyle;
+    const paddingKey = side === 'left' ? 'paddingLeft' : 'paddingRight';
+    const padding = style.get(paddingKey) as CSSLength | CSSPercentage;
+    const paddingWidth = this.resolveSpacingValue(padding, referenceWidth);
+    const borderWidth = this.resolveBorderSideWidth(styleSource, side);
+    return Math.max(0, paddingWidth + borderWidth);
+  }
+
+  private applyMarkerWidth(
+    marker: InlineStartMarkerLayoutNode | InlineEndMarkerLayoutNode,
+    side: 'left' | 'right',
+    referenceWidth: number,
+  ): number {
+    const width = this.resolveInlineEdgeWidth(
+      marker.domNode,
+      side,
+      referenceWidth,
+    );
+    marker.box.outerBox.width = width;
+    marker.box.scrollBox.width = width;
+    marker.box.innerBox.width = width;
+    return width;
+  }
+
   private resolveVerticalAlign(styleSource: Element): ResolvedVerticalAlign {
-    const value = styleSource._computedStyle.get('verticalAlign') as CSSVerticalAlign;
+    const value = styleSource._computedStyle.get(
+      'verticalAlign',
+    ) as CSSVerticalAlign;
     switch (value.type) {
       case 'top':
       case 'bottom':
@@ -162,7 +255,7 @@ export class InlineBoxLayoutNode extends LayoutNode {
 
     const styleMetrics = this.resolveTextStyleMetrics(styleSource);
     const measured = metrics.measure({
-      text: 'Mg',
+      text: 'M',
       fontSize: styleMetrics.fontSize,
       lineHeight: styleMetrics.lineHeight,
       font: styleMetrics.font,
@@ -175,15 +268,22 @@ export class InlineBoxLayoutNode extends LayoutNode {
       Number.isFinite(measured.descent) && measured.descent >= 0
         ? measured.descent
         : styleMetrics.fontSize * 0.2;
-    const height = Math.max(styleMetrics.lineHeight, ascent + descent);
-
+    const actualAscent =
+      Number.isFinite(measured.actualAscent) && measured.actualAscent > 0
+        ? measured.actualAscent
+        : ascent;
+    const actualDescent =
+      Number.isFinite(measured.actualDescent) && measured.actualDescent >= 0
+        ? measured.actualDescent
+        : descent;
     const resolved: FontMetrics = {
       fontSize: styleMetrics.fontSize,
       lineHeight: styleMetrics.lineHeight,
       font: styleMetrics.font,
       ascent,
       descent,
-      height,
+      actualAscent,
+      actualDescent,
     };
     this.fontMetricsCache.set(styleSource, resolved);
     return resolved;
@@ -203,9 +303,11 @@ export class InlineBoxLayoutNode extends LayoutNode {
     });
     return {
       width: measured.width,
-      height: fontMetrics.height,
+      height: fontMetrics.ascent + fontMetrics.descent,
       ascent: fontMetrics.ascent,
       descent: fontMetrics.descent,
+      actualAscent: fontMetrics.actualAscent,
+      actualDescent: fontMetrics.actualDescent,
       fontSize: fontMetrics.fontSize,
       lineHeight: fontMetrics.lineHeight,
     };
@@ -232,7 +334,10 @@ export class InlineBoxLayoutNode extends LayoutNode {
     if (item instanceof InlineBlockLayoutNode) {
       return item.domNode;
     }
-    if (item instanceof InlineStartMarkerLayoutNode || item instanceof InlineEndMarkerLayoutNode) {
+    if (
+      item instanceof InlineStartMarkerLayoutNode ||
+      item instanceof InlineEndMarkerLayoutNode
+    ) {
       return item.domNode;
     }
     return this.domNode;
@@ -255,7 +360,9 @@ export class InlineBoxLayoutNode extends LayoutNode {
     return null;
   }
 
-  private resolveInlineBlockBaselineOffset(node: InlineBlockLayoutNode): number {
+  private resolveInlineBlockBaselineOffset(
+    node: InlineBlockLayoutNode,
+  ): number {
     const marginTop = node.box.margin.top;
     const lastLine = this.findLastLineBox(node.block);
     if (lastLine == null) {
@@ -278,7 +385,103 @@ export class InlineBoxLayoutNode extends LayoutNode {
     }
   }
 
-  private resolvePercentageShift(value: CSSPercentage, lineHeight: number): number {
+  private shiftSubtreeX(node: LayoutNode, dx: number): void {
+    if (dx === 0) {
+      return;
+    }
+    node.box.outerBox.left += dx;
+    node.box.scrollBox.left += dx;
+    node.box.innerBox.left += dx;
+    const children = node.getChildren();
+    for (let i = 0; i < children.length; i += 1) {
+      this.shiftSubtreeX(children[i], dx);
+    }
+  }
+
+  private applyHorizontalShift(line: LineBoxLayoutNode, dx: number): void {
+    if (dx === 0) {
+      return;
+    }
+    for (let i = 0; i < line.children.length; i += 1) {
+      this.shiftSubtreeX(line.children[i], dx);
+    }
+  }
+
+  private applyJustifyAlignment(
+    line: LineBoxLayoutNode,
+    extra: number,
+  ): boolean {
+    if (extra <= 0) {
+      return false;
+    }
+
+    let totalSpaces = 0;
+    for (let i = 0; i < line.children.length; i += 1) {
+      const item = line.children[i];
+      if (!(item instanceof TextRunLayoutNode)) {
+        continue;
+      }
+      if (item.text.trim() !== '') {
+        continue;
+      }
+      totalSpaces += item.text.length;
+    }
+    if (totalSpaces <= 0) {
+      return false;
+    }
+
+    const perSpace = extra / totalSpaces;
+    let carryShift = 0;
+    for (let i = 0; i < line.children.length; i += 1) {
+      const item = line.children[i];
+      if (carryShift !== 0) {
+        this.shiftSubtreeX(item, carryShift);
+      }
+      if (!(item instanceof TextRunLayoutNode)) {
+        continue;
+      }
+      if (item.text.trim() !== '') {
+        continue;
+      }
+      const added = item.text.length * perSpace;
+      item.box.outerBox.width += added;
+      item.box.scrollBox.width += added;
+      item.box.innerBox.width += added;
+      carryShift += added;
+    }
+    return true;
+  }
+
+  private applyHorizontalAlignment(
+    line: LineBoxLayoutNode,
+    contentWidth: number,
+    isLastLine: boolean,
+  ): void {
+    const mode = this.resolveTextAlignMode();
+    if (mode === 'left') {
+      return;
+    }
+
+    const extra = line.box.outerBox.width - contentWidth;
+    if (mode === 'justify' && !isLastLine) {
+      if (this.applyJustifyAlignment(line, extra)) {
+        return;
+      }
+    }
+
+    if (mode === 'right') {
+      this.applyHorizontalShift(line, extra);
+      return;
+    }
+    if (mode === 'center') {
+      this.applyHorizontalShift(line, extra / 2);
+    }
+  }
+
+  private resolvePercentageShift(
+    value: CSSPercentage,
+    lineHeight: number,
+  ): number {
     return lineHeight * (value.value / 100);
   }
 
@@ -304,11 +507,17 @@ export class InlineBoxLayoutNode extends LayoutNode {
       case 'text-bottom':
         return lineTop + strut.textBottomOffset - descriptor.blockSize;
       case 'sub':
-        return baselineY - descriptor.baselineOffset + descriptor.fontSize * 0.2;
+        return (
+          baselineY - descriptor.baselineOffset + descriptor.fontSize * 0.2
+        );
       case 'super':
-        return baselineY - descriptor.baselineOffset - descriptor.fontSize * 0.2;
+        return (
+          baselineY - descriptor.baselineOffset - descriptor.fontSize * 0.2
+        );
       case 'length':
-        return baselineY - descriptor.baselineOffset - descriptor.verticalAlign.value;
+        return (
+          baselineY - descriptor.baselineOffset - descriptor.verticalAlign.value
+        );
       case 'percentage': {
         const shift = this.resolvePercentageShift(
           { type: 'percentage', value: descriptor.verticalAlign.value },
@@ -325,17 +534,17 @@ export class InlineBoxLayoutNode extends LayoutNode {
   private applyLineAlignment(
     line: LineBoxLayoutNode,
     y: number,
-    fallbackLineHeight: number,
     metrics: TextMetricsProvider,
   ): number {
     const strut = this.resolveLineStrut(metrics);
     const descriptors: LineItemDescriptor[] = [];
-    let maxItemBlockSize = 0;
+    let maxInlineBlockSize = 0;
 
     for (let i = 0; i < line.children.length; i += 1) {
       const item = line.children[i];
       const styleSource = this.resolveItemStyleSource(item);
       const styleMetrics = this.resolveTextStyleMetrics(styleSource);
+      const fontMetrics = this.resolveFontMetrics(styleSource, metrics);
       if (item instanceof TextRunLayoutNode) {
         const ascent = item.ascent ?? styleMetrics.fontSize * 0.8;
         const descent = item.descent ?? styleMetrics.fontSize * 0.2;
@@ -352,7 +561,6 @@ export class InlineBoxLayoutNode extends LayoutNode {
           lineHeight: styleMetrics.lineHeight,
           top: y,
         });
-        maxItemBlockSize = Math.max(maxItemBlockSize, blockSize);
         continue;
       }
 
@@ -368,23 +576,23 @@ export class InlineBoxLayoutNode extends LayoutNode {
           lineHeight: styleMetrics.lineHeight,
           top: y,
         });
-        maxItemBlockSize = Math.max(maxItemBlockSize, blockSize);
+        maxInlineBlockSize = Math.max(maxInlineBlockSize, blockSize);
         continue;
       }
 
       descriptors.push({
         node: item,
         kind: 'marker',
-        blockSize: 0,
-        baselineOffset: 0,
-        verticalAlign: { type: 'baseline' },
+        blockSize: fontMetrics.ascent + fontMetrics.descent,
+        baselineOffset: fontMetrics.ascent,
+        verticalAlign: this.resolveVerticalAlign(styleSource),
         fontSize: styleMetrics.fontSize,
         lineHeight: styleMetrics.lineHeight,
         top: y,
       });
     }
 
-    const baseLineHeight = Math.max(strut.lineHeight, maxItemBlockSize, fallbackLineHeight);
+    const baseLineHeight = Math.max(strut.lineHeight, maxInlineBlockSize);
     let topExtra = 0;
     let bottomExtra = 0;
 
@@ -396,8 +604,17 @@ export class InlineBoxLayoutNode extends LayoutNode {
 
       for (let i = 0; i < descriptors.length; i += 1) {
         const descriptor = descriptors[i];
-        const top = this.resolveItemTop(descriptor, y, lineHeight, baselineY, strut);
+        const top = this.resolveItemTop(
+          descriptor,
+          y,
+          lineHeight,
+          baselineY,
+          strut,
+        );
         descriptor.top = top;
+        if (descriptor.kind !== 'inline-block') {
+          continue;
+        }
         const bottom = top + descriptor.blockSize;
         minTop = Math.min(minTop, top);
         maxBottom = Math.max(maxBottom, bottom);
@@ -439,7 +656,7 @@ export class InlineBoxLayoutNode extends LayoutNode {
       descriptor.node.box.scrollBox.top = top;
       descriptor.node.box.innerBox.top = top;
 
-      if (descriptor.kind === 'text') {
+      if (descriptor.kind === 'text' || descriptor.kind === 'marker') {
         descriptor.node.box.outerBox.height = descriptor.blockSize;
         descriptor.node.box.scrollBox.height = descriptor.blockSize;
         descriptor.node.box.innerBox.height = descriptor.blockSize;
@@ -500,27 +717,11 @@ export class InlineBoxLayoutNode extends LayoutNode {
       const items = line.children;
       const lineStartX = segment.left;
       let x = lineStartX;
-      let maxItemHeight = 0;
       let touchedLine = false;
       let boundaryTriggered = false;
       let endOfStream = false;
       let wrapTriggered = false;
       let forcedBreak = false;
-
-      if (activeInlineStack.length > 0) {
-        for (let i = 0; i < activeInlineStack.length; i += 1) {
-          items.push(
-            factory.createInlineStartMarker(
-              activeInlineStack[i],
-              line,
-              [...activeInlineStack],
-              true,
-              x,
-              y,
-            ),
-          );
-        }
-      }
 
       while (true) {
         const item = walker.peek();
@@ -535,6 +736,12 @@ export class InlineBoxLayoutNode extends LayoutNode {
             walker.consume(false);
             continue;
           }
+          if (item.element.tagName === 'BR') {
+            walker.consume(false);
+            forcedBreak = true;
+            touchedLine = true;
+            break;
+          }
           if (display === 'block') {
             boundaryTriggered = true;
             break;
@@ -542,17 +749,17 @@ export class InlineBoxLayoutNode extends LayoutNode {
 
           if (display === 'inline') {
             activeInlineStack.push(item.element);
-            items.push(
-              factory.createInlineStartMarker(
-                item.element,
-                line,
-                [...activeInlineStack],
-                false,
-                x,
-                y,
-              ),
+            const marker = factory.createInlineStartMarker(
+              item.element,
+              line,
+              [...activeInlineStack],
+              false,
+              x,
+              y,
             );
-            touchedLine = true;
+            items.push(marker);
+            x += this.applyMarkerWidth(marker, 'left', containing.width);
+            touchedLine = touchedLine || marker.box.outerBox.width > 0;
             walker.consume(true);
             continue;
           }
@@ -569,26 +776,24 @@ export class InlineBoxLayoutNode extends LayoutNode {
             inlineContaining.width = Math.max(0, segment.right - x);
             inlineContaining.height = containing.height;
 
-            const inlineBlock = factory.createInlineBlock(
-              item.element,
-              line,
-              [...activeInlineStack],
-            );
+            const inlineBlock = factory.createInlineBlock(item.element, line, [
+              ...activeInlineStack,
+            ]);
             inlineBlock.layoutAtomic(inlineContaining, y, metrics, factory);
             const blockWidth =
               inlineBlock.box.outerBox.width + inlineBlock.box.margin.width;
 
-            if (wrapAllowed && x > lineStartX && x + blockWidth > segment.right) {
+            if (
+              wrapAllowed &&
+              x > lineStartX &&
+              x + blockWidth > segment.right
+            ) {
               wrapTriggered = true;
               break;
             }
 
             items.push(inlineBlock);
             x += blockWidth;
-            maxItemHeight = Math.max(
-              maxItemHeight,
-              inlineBlock.box.outerBox.height + inlineBlock.box.margin.height,
-            );
             touchedLine = true;
             walker.consume(false);
             continue;
@@ -597,21 +802,21 @@ export class InlineBoxLayoutNode extends LayoutNode {
 
         if (item.type === 'end') {
           if (activeInlineStack.includes(item.element)) {
-            items.push(
-              factory.createInlineEndMarker(
-                item.element,
-                line,
-                [...activeInlineStack],
-                false,
-                x,
-                y,
-              ),
+            const marker = factory.createInlineEndMarker(
+              item.element,
+              line,
+              [...activeInlineStack],
+              false,
+              x,
+              y,
             );
+            items.push(marker);
+            x += this.applyMarkerWidth(marker, 'right', containing.width);
             const index = activeInlineStack.lastIndexOf(item.element);
             if (index !== -1) {
               activeInlineStack.splice(index, activeInlineStack.length - index);
             }
-            touchedLine = true;
+            touchedLine = touchedLine || marker.box.outerBox.width > 0;
           }
           walker.consume(true);
           continue;
@@ -650,7 +855,11 @@ export class InlineBoxLayoutNode extends LayoutNode {
             }
 
             const measured = this.measureText(token.text, styleSource, metrics);
-            if (wrapAllowed && x > lineStartX && x + measured.width > segment.right) {
+            if (
+              wrapAllowed &&
+              x > lineStartX &&
+              x + measured.width > segment.right
+            ) {
               wrapTriggered = true;
               break;
             }
@@ -671,11 +880,12 @@ export class InlineBoxLayoutNode extends LayoutNode {
             run.box.innerBox.height = measured.height;
             run.ascent = measured.ascent;
             run.descent = measured.descent;
+            run.actualAscent = measured.actualAscent;
+            run.actualDescent = measured.actualDescent;
             run.fontSize = measured.fontSize;
 
             items.push(run);
             x += measured.width;
-            maxItemHeight = Math.max(maxItemHeight, measured.height);
             touchedLine = true;
             consumedLength += token.sourceLength;
           }
@@ -700,23 +910,11 @@ export class InlineBoxLayoutNode extends LayoutNode {
         }
       }
 
-      if (activeInlineStack.length > 0) {
-        for (let i = activeInlineStack.length - 1; i >= 0; i -= 1) {
-          items.push(
-            factory.createInlineEndMarker(
-              activeInlineStack[i],
-              line,
-              [...activeInlineStack],
-              true,
-              x,
-              y,
-            ),
-          );
-        }
-      }
+      const contentWidth = Math.max(0, x - lineStartX);
+      const isLastLine = boundaryTriggered || endOfStream || forcedBreak;
+      this.applyHorizontalAlignment(line, contentWidth, isLastLine);
 
-      const fallbackLineHeight = maxItemHeight;
-      const lineHeight = this.applyLineAlignment(line, y, fallbackLineHeight, metrics);
+      const lineHeight = this.applyLineAlignment(line, y, metrics);
 
       this.children.push(line);
       producedAny = true;
