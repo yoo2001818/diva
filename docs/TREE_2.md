@@ -222,4 +222,102 @@ I haven't looked it up precisely, but CSS actually requires to determine the
 wraps" is actually necessary to determine the parent's width. So this approach
 could work for initial implementation.
 
-To be continued...
+## Implementation Ideas
+
+Let's assess the current code situation and see what I can do to implement all
+of this. There are working implementation that I'd like to keep:
+
+- CSSOM
+- DOM
+- CSSStyleDeclaration
+
+And there are chaotic mess that are experimental and subject to change:
+
+- "Box"
+- LayoutNode
+- StyleData
+- FormattingContext
+
+First of all, I need to get rid of existing layout tree ideas because it's
+structually invalid, and simply obsolete.
+
+### Style Dictionary
+
+I think I'd start by decoupling style dictionary from everything else.
+That is, while some CSS values simply
+need full layout engine computation due to "%" needing precise dimensions, this
+is usually an edge case and it's generally easier to postpone that. That is,
+other than "%", everything else can be boil down to "px". If "%" is involved,
+the layout engine itself would need to write that to a special dictionary and
+re-run the reflow logic with that data. An auxilary dictionary specific for
+resolving complicated values.
+
+Also, a "style dictionary" is specific for each (pseudo) element, not each
+layout node. Likewise, each Element can own the following property:
+
+```ts
+interface Element {
+  _pseudoStyleDictMap: Map<string, StyleDictTBD>;
+  _styleDict: StyleDictTBD;
+}
+```
+
+LayoutNode can store `StyleDictTBD` directly for its own use, as it's necessary
+for text nodes that doesn't directly own styles.
+
+### Smarter Style Dictionary?
+
+As of now, a "StyleDict" is an interface. It can be a map for base declarations,
+or it can do "smart" things, like resolving cascading or inheritance. For the
+layout engine itself, it never needs to make that distinction, but the fact that
+it is "smart" - it would ideally just pass convenient "px" or "rgb" values that
+can be directly used by the layout engine. As such, it could be meaningful to
+create and name a class that simply does that. Not sure about the name though.
+
+To reiterate its requirements:
+
+1. Specified value - The raw property value decided by the CSS
+   1. Directly specified style attribute
+   2. Cascaded CSS value
+   3. Inherited CSS value
+2. Computed value - Intermediate calculated values if it doesn't involve percentages
+3. Used value - Calculated value in pixels that are actually used by the layout
+4. Actual value / resolved value - It should store auxilary values provided by the layout engine
+
+### Formatting Context and Layout Nodes
+
+The idea of layout nodes is simply necessary, but it does wrong things right now.
+However, I think the "BFC" and "IFC" is basically equivalent to each layout node,
+and that it can make layout decisions after storing all the children into them.
+That is, each "BlockNode" itself is a BFC, and a "InlineBoxNode" is an IFC.
+
+After walking all the nodes, it can independently make layout decisions with
+the collected children list. Which would be difficult, but all the requirements
+are there. However, I think if I ditch "%" and "float", it could be quite trivial
+to do so.
+
+Except IFCs. It needs line boxes, so it needs a "not-line" children list, and
+"line" children list. Which could be trivial to convert between two, again, except
+the TextRunNode which can be split up. Perhaps it'd be better to have two kinds
+of TextRunNode, one for "not-line" representation, and for "split-up" line
+representation.
+
+Also inline elements. Which is dealt as an "annotation" as told before, so it won't
+have its own layout nodes, but affected layout nodes would depend on the inline
+element's style dictionary (that is, marked as a direct parent). Which brings
+another concern about how "client rects" are defined for them. I think each line
+node would need to manage a "virtual layout node" to correctly report the
+location of the client rect for inline elements.
+
+### About `getClientRects()`...
+
+I also need to implement such functions that maps LayoutNode back to the node
+itself. This can be readily done by each Element (and unfortunately, Text too)
+storing related LayoutNodes. Which necessitates lifecycle management. Fun! But
+still, it boils down to LayoutNode references, so it's easy enough.
+
+```tsx
+interface Element {
+  _layoutNodes: LayoutNode[];
+}
+```
