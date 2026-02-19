@@ -27,13 +27,13 @@ export class HTMLStyleElement extends HTMLElement {
     return false;
   }
 
-  set disabled(value: boolean) {}
+  set disabled(_value: boolean) {}
 
   get media(): string {
     return '';
   }
 
-  set media(value: string) {}
+  set media(_value: string) {}
 
   get sheet(): CSSStyleSheet {
     return this._sheet;

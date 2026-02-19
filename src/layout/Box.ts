@@ -28,7 +28,7 @@ export class BorderStyle {
 }
 
 export class BackgroundStyle {
-  color: CSSColor = { type: 'hash', value: 'ffffff' };
+  color: CSSColor = { type: 'identifier', value: 'transparent' };
 }
 
 export class LayoutBox {

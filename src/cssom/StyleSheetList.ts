@@ -6,6 +6,10 @@ import { HTMLStyleElement } from '../html/HTMLStyleElement';
 import { CSSStyleSheet } from './CSSStyleSheet';
 
 export class StyleSheetList extends Array<CSSStyleSheet> {
+  static get [Symbol.species](): ArrayConstructor {
+    return Array;
+  }
+
   _styleNodes: HTMLCollectionImpl;
   _updateSignal: RecursiveSignal<[]>;
   constructor(document: Document) {
@@ -15,8 +19,8 @@ export class StyleSheetList extends Array<CSSStyleSheet> {
       this._update();
     });
     this._updateSignal = new RecursiveSignal((listener) => {
-      const signals = this.map((sheet) => {
-        sheet._updateSignal.add(() => listener);
+      const signals = [...this].map((sheet) => {
+        sheet._updateSignal.add(listener);
         return sheet._updateSignal;
       });
       return () => {

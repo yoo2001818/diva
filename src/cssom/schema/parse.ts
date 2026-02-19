@@ -96,7 +96,10 @@ export class Parser {
   }
 
   keyword<T extends string>(...values: T[]): CSSKeyword<T> | null {
-    const result = this.match(new RegExp(values.join('|'), 'y'));
+    const escaped = [...values]
+      .sort((a, b) => b.length - a.length)
+      .map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const result = this.match(new RegExp(`(?:${escaped.join('|')})`, 'y'));
     if (result == null) {
       return null;
     }

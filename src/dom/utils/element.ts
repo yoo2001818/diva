@@ -1,7 +1,7 @@
 import { parseSelectors } from '../../parser/selector';
 import { Document } from '../Document';
 import { Element } from '../Element';
-import { HTMLCollection, HTMLCollectionImpl } from '../HTMLCollection';
+import { HTMLCollectionImpl } from '../HTMLCollection';
 import { Node } from '../Node';
 import { NodeList, NodeListImpl } from '../NodeList';
 import { ensurePreInsertionValidity } from './node';
@@ -13,7 +13,7 @@ export function elementPreviousElementSibling(node: Node): Element | null {
   if (parent == null) {
     return null;
   }
-  for (let i = node._parentIndex! + 1; i < parent._childNodes.length; i += 1) {
+  for (let i = node._parentIndex! - 1; i >= 0; i -= 1) {
     const item = parent._childNodes[i];
     if (item.nodeType === Node.ELEMENT_NODE) {
       return item as Element;
@@ -27,7 +27,7 @@ export function elementNextElementSibling(node: Node): Element | null {
   if (parent == null) {
     return null;
   }
-  for (let i = node._parentIndex! - 1; i >= 0; i -= 1) {
+  for (let i = node._parentIndex! + 1; i < parent._childNodes.length; i += 1) {
     const item = parent._childNodes[i];
     if (item.nodeType === Node.ELEMENT_NODE) {
       return item as Element;
@@ -189,13 +189,13 @@ export function elementGetElementsByTagName(
     filterSignal(node._childListChangedRecursiveSignal, (record) => {
       for (let i = 0; i < record.addedNodes.length; i += 1) {
         const node = record.addedNodes[i];
-        if (node instanceof Element && node.tagName === qualifiedName) {
+        if (node instanceof Element && node.tagName === name) {
           return true;
         }
       }
       for (let i = 0; i < record.removedNodes.length; i += 1) {
         const node = record.removedNodes[i];
-        if (node instanceof Element && node.tagName === qualifiedName) {
+        if (node instanceof Element && node.tagName === name) {
           return true;
         }
       }

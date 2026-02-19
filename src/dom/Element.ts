@@ -1,6 +1,5 @@
 import { CSSStyleDeclaration } from '../cssom/CSSStyleDeclaration';
 import { ComputedStyle } from '../layout/ComputedStyle';
-import { StyleData } from '../layout/StyleData';
 import { parseHtml } from '../parser/html';
 import { ComplexSelector, parseSelectors } from '../parser/selector';
 import { Attr } from './Attr';
@@ -49,7 +48,6 @@ export class Element
   _classList: DOMTokenList = new DOMTokenList();
   _slot: string = '';
   _attributes: NamedNodeMap = new NamedNodeMap(this);
-  _styleData: unknown;
   _computedStyle: ComputedStyle;
   _attributesChangedSignal = new Signal<[MutationRecord]>();
   _children: HTMLCollection;
@@ -254,7 +252,7 @@ export class Element
     return this._attributes.removeNamedItem(attr.name);
   }
 
-  attachShadow(init: ShadowRootInit): ShadowRoot {
+  attachShadow(_init: ShadowRootInit): ShadowRoot {
     throw new Error('Method not implemented.');
   }
 
@@ -302,11 +300,11 @@ export class Element
     return elementGetElementsByClassName(this, classNames);
   }
 
-  insertAdjacentElement(where: string, element: Element): Element | null {
+  insertAdjacentElement(_where: string, _element: Element): Element | null {
     throw new Error('Method not implemented.');
   }
 
-  insertAdjacentText(where: string, data: string): void {
+  insertAdjacentText(_where: string, _data: string): void {
     throw new Error('Method not implemented.');
   }
 
@@ -479,13 +477,6 @@ export class Element
       }
     }
     return true;
-  }
-
-  get styleData(): StyleData {
-    if (this._styleData == null) {
-      this._styleData = new StyleData(this);
-    }
-    return this._styleData as StyleData;
   }
 
   get style(): CSSStyleDeclaration {

@@ -147,17 +147,17 @@ export class Document
   }
 
   createProcessingInstruction(
-    target: string,
-    data: string,
+    _target: string,
+    _data: string,
   ): ProcessingInstruction {
     throw new Error('Method not implemented.');
   }
 
-  importNode(node: Node, deep: boolean = false): Node {
+  importNode(_node: Node, _deep: boolean = false): Node {
     throw new Error('Method not implemented.');
   }
 
-  adoptNode(node: Node): Node {
+  adoptNode(_node: Node): Node {
     throw new Error('Method not implemented.');
   }
 
@@ -169,7 +169,7 @@ export class Document
     return new Attr(this, qualifiedName);
   }
 
-  createEvent(interfaceName: string): Event {
+  createEvent(_interfaceName: string): Event {
     throw new Error('Method not implemented.');
   }
 
@@ -178,17 +178,17 @@ export class Document
   }
 
   createNodeIterator(
-    root: Node,
-    whatToShow: number = 0xffffffff,
-    filter: NodeFilter | null = null,
+    _root: Node,
+    _whatToShow: number = 0xffffffff,
+    _filter: NodeFilter | null = null,
   ): NodeIterator {
     throw new Error('Method not implemented.');
   }
 
   createTreeWalker(
-    root: Node,
-    whatToShow: number = 0xffffffff,
-    filter: NodeFilter | null = null,
+    _root: Node,
+    _whatToShow: number = 0xffffffff,
+    _filter: NodeFilter | null = null,
   ): TreeWalker {
     throw new Error('Method not implemented.');
   }
@@ -255,7 +255,7 @@ export class Document
     return this._styleSheets;
   }
 
-  static parseHTMLUnsafe(html: string): Document {
+  static parseHTMLUnsafe(_html: string): Document {
     throw new Error('Not implemented');
   }
 
@@ -267,7 +267,7 @@ export class Document
     throw new Error('Not implemented');
   }
 
-  set domain(value: string) {
+  set domain(_value: string) {
     throw new Error('Not implemented');
   }
 
@@ -279,7 +279,7 @@ export class Document
     throw new Error('Not implemented');
   }
 
-  set cookie(value: string) {
+  set cookie(_value: string) {
     throw new Error('Not implemented');
   }
 
@@ -295,7 +295,7 @@ export class Document
     throw new Error('Not implemented');
   }
 
-  set title(value: string) {
+  set title(_value: string) {
     throw new Error('Not implemented');
   }
 
@@ -303,7 +303,7 @@ export class Document
     throw new Error('Not implemented');
   }
 
-  set dir(value: string) {
+  set dir(_value: string) {
     throw new Error('Not implemented');
   }
 
@@ -311,7 +311,7 @@ export class Document
     throw new Error('Not implemented');
   }
 
-  set body(value: Element | null) {
+  set body(_value: Element | null) {
     throw new Error('Not implemented');
   }
 

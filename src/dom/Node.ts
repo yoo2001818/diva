@@ -209,7 +209,7 @@ export class Node {
   static readonly DOCUMENT_POSITION_CONTAINED_BY: number = 0x10;
   static readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC: number = 0x20;
 
-  compareDocumentPosition(other: Node): number {
+  compareDocumentPosition(_other: Node): number {
     throw new Error('Method not implemented.');
   }
 
@@ -227,15 +227,15 @@ export class Node {
     return false;
   }
 
-  lookupPrefix(namespace: string | null): string | null {
+  lookupPrefix(_namespace: string | null): string | null {
     throw new Error('Method not implemented.');
   }
 
-  lookupNamespaceURI(prefix: string | null): string | null {
+  lookupNamespaceURI(_prefix: string | null): string | null {
     throw new Error('Method not implemented.');
   }
 
-  isDefaultNamespace(namespace: string): boolean {
+  isDefaultNamespace(_namespace: string): boolean {
     throw new Error('Method not implemented.');
   }
 

@@ -21,10 +21,6 @@ export class StyleDictCascaded implements StyleDict {
       // TODO: This needs to be removed when the element is deleted..
       this.cachedDirty = true;
     });
-    this.element._computedStyle.style._changedSignal.add(() => {
-      // TODO: This needs to be removed when the element is deleted..
-      this.cachedDirty = true;
-    });
   }
 
   _updateRuleList(): void {

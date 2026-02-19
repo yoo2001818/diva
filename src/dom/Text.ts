@@ -8,7 +8,7 @@ export class Text extends CharacterData {
     this.data = data;
   }
 
-  splitText(offset: number): Text {
+  splitText(_offset: number): Text {
     throw new Error('Method not implemented.');
   }
 

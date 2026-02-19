@@ -14,6 +14,9 @@ export class ComputedStyle {
     this.element = element;
     this.cascadedDict = new StyleDictCascaded(this.style._dictMap, element);
     this.inheritedDict = new StyleDictInherited(this.cascadedDict, element);
+    this.style._changedSignal.add(() => {
+      this.cascadedDict.cachedDirty = true;
+    });
   }
 
   /**
@@ -21,12 +24,12 @@ export class ComputedStyle {
    */
   getFontSize(): number {
     const fontSize = this.get('fontSize');
-    const parent = this.element.parentElement!;
+    const parent = this.element.parentElement;
+    const parentFontSize = parent?._computedStyle.getFontSize() ?? 16;
     switch (fontSize.type) {
       case 'length':
         switch (fontSize.unit) {
           case 'em': {
-            const parentFontSize = parent._computedStyle.getFontSize();
             return parentFontSize * fontSize.value;
           }
           case 'cm':
@@ -42,38 +45,36 @@ export class ComputedStyle {
             return fontSize.value;
         }
       case 'percentage': {
-        const parentFontSize = parent._computedStyle.getFontSize();
         return parentFontSize * fontSize.value;
       }
       case 'xx-small':
+        return parentFontSize * 0.6;
       case 'x-small':
+        return parentFontSize * 0.75;
       case 'small':
+        return parentFontSize * 0.89;
       case 'medium':
+        return parentFontSize;
       case 'large':
+        return parentFontSize * 1.2;
       case 'larger':
+        return parentFontSize * 1.2;
       case 'x-large':
+        return parentFontSize * 1.5;
       case 'xx-large':
+        return parentFontSize * 2;
       case 'smaller':
-      case 'larger':
+        return parentFontSize * 0.833;
       default:
-        // ...
-        return 1;
+        return parentFontSize;
     }
   }
 
   get<K extends keyof CSSStyleDict>(
     key: K,
   ): Exclude<CSSStyleDict[K], CSSKeyword<'inherit'>> {
-    const value = this.cascadedDict.getValue(key);
-    if (value == null) {
-      // Use browser default
-      throw new Error('Not implemented yet');
-    }
+    const value = this.inheritedDict.getValue(key);
     if (!Array.isArray(value)) {
-      if (value.type === 'inherit') {
-        const parent = this.element.parentElement!;
-        return parent._computedStyle.get(key);
-      }
       if (key !== 'fontSize' && value.type === 'length') {
         const length = value as CSSLength;
         switch (length.unit) {
@@ -98,22 +99,25 @@ export class ComputedStyle {
             return length as any;
         }
       }
-      if (key !== 'fontSize' && value.type === 'percentage') {
-        const parent = this.element.parentElement!;
-        const contentWidth = parent.styleData.principalBox.contentWidth;
-        return {
-          type: 'length',
-          unit: 'px',
-          value: (contentWidth * value.value) / 100,
-        } as any;
-      }
     }
     return value as any;
   }
 
   getPx(key: keyof CSSStyleDict): number {
-    // FIXME: This is not workable
-    return (this.get(key) as CSSLength).value;
+    const value = this.get(key) as CSSLength | CSSKeyword<'thin' | 'medium' | 'thick'>;
+    if ((value as CSSLength).type === 'length') {
+      return (value as CSSLength).value;
+    }
+    switch (value.type) {
+      case 'thin':
+        return 1;
+      case 'medium':
+        return 3;
+      case 'thick':
+        return 5;
+      default:
+        return 0;
+    }
   }
 
   update(): void {

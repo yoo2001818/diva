@@ -15,8 +15,6 @@ export function* traverseElements(node: Node): Generator<Element, void> {
   }
   const nodes = node.childNodes;
   for (let i = 0; i < nodes.length; i += 1) {
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      yield* traverseElements(nodes[i]);
-    }
+    yield* traverseElements(nodes[i]);
   }
 }

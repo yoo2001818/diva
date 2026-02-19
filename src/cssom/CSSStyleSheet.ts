@@ -6,7 +6,7 @@ export class CSSStyleSheet {
   cssRules: CSSRuleList = new CSSRuleList();
   _updateSignal: Signal<[]> = new Signal();
 
-  constructor(options: CSSStyleSheetInit = {}) {}
+  constructor(_options: CSSStyleSheetInit = {}) {}
 
   get ownerRule(): CSSRule | null {
     return null;
