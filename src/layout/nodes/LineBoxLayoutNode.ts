@@ -15,6 +15,7 @@ export type LineItemLayoutNode =
 export class LineBoxLayoutNode extends LayoutNode {
   readonly domNode: Element;
   children: LineItemLayoutNode[] = [];
+  baselineOffset: number = 0;
 
   constructor(
     layoutDocument: LayoutDocument,

@@ -2,7 +2,7 @@ import { Element } from '../dom/Element';
 import { Box } from './Box';
 import { LayoutDocument } from './LayoutDocument';
 import {
-  DeterministicTextMetrics,
+  CanvasTextMetrics,
   TextMetricsProvider,
 } from './TextMetrics';
 import { LayoutNodeFactory } from './nodes/LayoutNodeFactory';
@@ -10,7 +10,7 @@ import { LayoutNodeFactory } from './nodes/LayoutNodeFactory';
 export class LayoutEngine {
   private metrics: TextMetricsProvider;
 
-  constructor(metrics: TextMetricsProvider = new DeterministicTextMetrics()) {
+  constructor(metrics: TextMetricsProvider = new CanvasTextMetrics()) {
     this.metrics = metrics;
   }
 

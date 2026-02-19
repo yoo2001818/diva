@@ -8,6 +8,9 @@ export class TextRunLayoutNode extends LayoutNode {
   readonly domNode: Text;
   text: string;
   inlineStack: Element[];
+  ascent: number | null = null;
+  descent: number | null = null;
+  fontSize: number | null = null;
 
   constructor(
     layoutDocument: LayoutDocument,

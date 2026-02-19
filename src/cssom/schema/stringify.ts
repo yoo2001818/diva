@@ -8,6 +8,7 @@ import {
   CSSNumber,
   CSSPercentage,
   CSSRgb,
+  CSSString,
   CSSUrl,
 } from '../dict';
 
@@ -61,6 +62,16 @@ export function stringifySideShorthand<T>(
 
 export function stringifyIdentifier(value: CSSIndentifier): string {
   return value.value;
+}
+
+export function stringifyFontFamily(
+  value: (CSSString | CSSIndentifier)[],
+): string {
+  return value
+    .map((item) =>
+      item.type === 'string' ? `"${item.value}"` : stringifyIdentifier(item),
+    )
+    .join(', ');
 }
 
 export function stringifyColor<T extends string>(

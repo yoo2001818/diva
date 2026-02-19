@@ -1,27 +1,11 @@
-import { CSSColor, CSSStyleDict } from '../cssom/dict';
+import { CSSColor } from '../cssom/dict';
 import { Element } from '../dom/Element';
+import {
+  buildFontDeclaration,
+  DEFAULT_FONT_DECLARATION,
+} from '../layout/Font';
 import { TextRunLayoutNode } from '../layout/nodes/TextRunLayoutNode';
 import { mapColor } from './color';
-
-function stringifyFontFamily(fontFamily: CSSStyleDict['fontFamily']): string {
-  if (fontFamily.length === 0) {
-    return 'sans-serif';
-  }
-  const families = fontFamily.map((entry) => {
-    if (entry.type === 'string') {
-      return `"${entry.value}"`;
-    }
-    return entry.value;
-  });
-  return families.join(', ');
-}
-
-function stringifyFontWeight(weight: CSSStyleDict['fontWeight']): string {
-  if (weight.type === 'number') {
-    return String(weight.value);
-  }
-  return weight.type;
-}
 
 function resolveStyleSource(node: TextRunLayoutNode): Element | null {
   if (node.inlineStack.length > 0) {
@@ -47,26 +31,27 @@ export function resolveTextPaintInstruction(
       text: node.text,
       x: node.box.outerBox.left,
       y: node.box.outerBox.top,
-      font: '16px sans-serif',
+      font: DEFAULT_FONT_DECLARATION,
       fillStyle: '#000000',
     };
   }
 
   const computed = styleSource._computedStyle;
-  const fontStyle = computed.get('fontStyle').type;
-  const fontVariant = computed.get('fontVariant').type;
-  const fontWeight = stringifyFontWeight(computed.get('fontWeight'));
-  const fontSize = computed.getFontSize();
-  const fontFamily = stringifyFontFamily(computed.get('fontFamily'));
+  const font = buildFontDeclaration(computed);
   const color = mapColor(computed.get('color') as CSSColor);
 
-  const y = node.box.outerBox.top + (node.box.outerBox.height - fontSize) / 2;
+  let y = node.box.outerBox.top + (node.box.outerBox.height - font.fontSize) / 2;
+  if (node.ascent != null && node.descent != null) {
+    const glyphHeight = node.ascent + node.descent;
+    const leading = Math.max(0, node.box.outerBox.height - glyphHeight);
+    y = node.box.outerBox.top + leading / 2;
+  }
 
   return {
     text: node.text,
     x: node.box.outerBox.left,
     y,
-    font: `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize}px ${fontFamily}`,
+    font: font.font,
     fillStyle: color,
   };
 }

@@ -5,6 +5,25 @@ import { CSSStyleDict } from './dict';
 import { StyleDict, StyleDictRecord } from './StyleDict';
 import { getSpecificity, hasHigherPriority } from './utils';
 
+interface CascadedRecord {
+  record: StyleDictRecord<any>;
+  specificity: number;
+  order: number;
+}
+
+function shouldOverride(
+  prev: CascadedRecord,
+  next: CascadedRecord,
+): boolean {
+  if (prev.record.priority !== next.record.priority) {
+    return hasHigherPriority(next.record.priority, prev.record.priority);
+  }
+  if (next.specificity !== prev.specificity) {
+    return next.specificity > prev.specificity;
+  }
+  return next.order > prev.order;
+}
+
 export class StyleDictCascaded implements StyleDict {
   elementStyle: StyleDict;
   element: Element;
@@ -18,27 +37,26 @@ export class StyleDictCascaded implements StyleDict {
     this.affectedRules = [];
     const styleSheets = element.ownerDocument!.styleSheets;
     styleSheets._updateSignal.add(() => {
-      // TODO: This needs to be removed when the element is deleted..
+      this.cachedDirty = true;
+    });
+    element._attributesChangedSignal.add(() => {
       this.cachedDirty = true;
     });
   }
 
   _updateRuleList(): void {
-    const rules: { rule: CSSStyleRule; specificity: number }[] = [];
+    const rules: CSSStyleRule[] = [];
     const styleSheets = this.element.ownerDocument!.styleSheets;
     for (const sheet of styleSheets) {
       for (const rule of sheet.cssRules) {
         if (rule instanceof CSSStyleRule) {
           if (this.element.matches(rule.selectorText)) {
-            // Parse the selector, retrieve specificity
-            const specificity = getSpecificity(this.element, rule.selectorText);
-            rules.push({ rule, specificity });
+            rules.push(rule);
           }
         }
       }
     }
-    rules.sort((a, b) => b.specificity - a.specificity);
-    this.affectedRules = rules.map((v) => v.rule);
+    this.affectedRules = rules;
   }
 
   _updateMap(): void {
@@ -46,20 +64,53 @@ export class StyleDictCascaded implements StyleDict {
       return;
     }
     this._updateRuleList();
-    this.cachedMap.clear();
-    // Walk every rule and store each map
-    for (const [property, value] of this.elementStyle.entries()) {
-      this.cachedMap.set(property, value);
+
+    const resolved = new Map<keyof CSSStyleDict, CascadedRecord>();
+
+    // Inline style acts like highest specificity declaration in author styles.
+    let inlineOrder = 1_000_000_000;
+    for (const [property, record] of this.elementStyle.entries()) {
+      resolved.set(property, {
+        record,
+        specificity: 1_000_000_000,
+        order: inlineOrder,
+      });
+      inlineOrder += 1;
     }
-    for (const rule of this.affectedRules) {
-      const dictMap = (rule.style as CSSStyleDeclarationInternal)._dictMap;
-      for (const [property, value] of dictMap.entries()) {
-        const prev = this.cachedMap.get(property);
-        if (prev == null || hasHigherPriority(value.priority, prev.priority)) {
-          this.cachedMap.set(property, value);
+
+    let order = 0;
+    const styleSheets = this.element.ownerDocument!.styleSheets;
+    for (const sheet of styleSheets) {
+      for (const rule of sheet.cssRules) {
+        if (!(rule instanceof CSSStyleRule)) {
+          continue;
         }
+        if (!this.element.matches(rule.selectorText)) {
+          continue;
+        }
+
+        const specificity = getSpecificity(this.element, rule.selectorText);
+        const dictMap = (rule.style as CSSStyleDeclarationInternal)._dictMap;
+        for (const [property, record] of dictMap.entries()) {
+          const next: CascadedRecord = {
+            record,
+            specificity,
+            order,
+          };
+          const prev = resolved.get(property);
+          if (prev == null || shouldOverride(prev, next)) {
+            resolved.set(property, next);
+          }
+        }
+        order += 1;
       }
     }
+
+    this.cachedMap.clear();
+    for (const [property, data] of resolved.entries()) {
+      this.cachedMap.set(property, data.record);
+    }
+
     this.cachedDirty = false;
   }
 

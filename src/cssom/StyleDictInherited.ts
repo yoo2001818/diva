@@ -6,69 +6,6 @@ import { StyleDictCascaded } from './StyleDictCascaded';
 
 type CleanedValue<T> = Exclude<T, CSSKeyword<'initial' | 'inherit'>>;
 
-const BLOCK_DISPLAY_TAGS = new Set<string>([
-  'ADDRESS',
-  'ARTICLE',
-  'ASIDE',
-  'BLOCKQUOTE',
-  'BODY',
-  'DD',
-  'DIV',
-  'DL',
-  'DT',
-  'FIELDSET',
-  'FIGCAPTION',
-  'FIGURE',
-  'FOOTER',
-  'FORM',
-  'H1',
-  'H2',
-  'H3',
-  'H4',
-  'H5',
-  'H6',
-  'HEADER',
-  'HR',
-  'HTML',
-  'LI',
-  'MAIN',
-  'NAV',
-  'OL',
-  'P',
-  'PRE',
-  'SECTION',
-  'TABLE',
-  'TBODY',
-  'THEAD',
-  'TFOOT',
-  'TR',
-  'UL',
-]);
-
-const INLINE_BLOCK_DISPLAY_TAGS = new Set<string>(['IMG', 'CANVAS', 'VIDEO']);
-const NONE_DISPLAY_TAGS = new Set<string>([
-  'HEAD',
-  'SCRIPT',
-  'STYLE',
-  'META',
-  'LINK',
-  'TITLE',
-]);
-
-function getDefaultDisplay(element: Element): CSSStyleDict['display'] {
-  const tagName = element.tagName;
-  if (NONE_DISPLAY_TAGS.has(tagName)) {
-    return { type: 'none' };
-  }
-  if (INLINE_BLOCK_DISPLAY_TAGS.has(tagName)) {
-    return { type: 'inline-block' };
-  }
-  if (BLOCK_DISPLAY_TAGS.has(tagName)) {
-    return { type: 'block' };
-  }
-  return { type: 'inline' };
-}
-
 export class StyleDictInherited implements Omit<StyleDict, 'get' | 'getValue'> {
   cascadedDict: StyleDictCascaded;
   element: Element;
@@ -94,12 +31,6 @@ export class StyleDictInherited implements Omit<StyleDict, 'get' | 'getValue'> {
   ): StyleDictRecord<CleanedValue<CSSStyleDict[K]>> {
     const entry = this.cascadedDict.get(property);
     const descriptor = STYLE_PROPERTY_DESCRIPTOR_MAP[property];
-    if (entry == null && property === 'display') {
-      return {
-        value: getDefaultDisplay(this.element) as any,
-        priority: null,
-      };
-    }
     if (entry == null && !descriptor.isInherited) {
       return {
         value: descriptor.default as any,

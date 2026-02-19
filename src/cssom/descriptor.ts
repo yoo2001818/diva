@@ -53,7 +53,7 @@ export const STYLE_PROPERTY_DESCRIPTOR_MAP: StylePropertyDescriptorMap = {
   direction: { default: keyword('ltr'), isInherited: true },
   display: { default: keyword('inline') },
   float: { default: keyword('none') },
-  fontFamily: { default: [identifier('sans-serif')], isInherited: true },
+  fontFamily: { default: [identifier('serif')], isInherited: true },
   fontSize: { default: keyword('medium'), isInherited: true },
   fontStyle: { default: keyword('normal'), isInherited: true },
   fontVariant: { default: keyword('normal'), isInherited: true },

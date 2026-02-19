@@ -4,6 +4,7 @@ import { RecursiveSignal } from '../dom/Signal';
 import { elementGetElementsByTagName } from '../dom/utils/element';
 import { HTMLStyleElement } from '../html/HTMLStyleElement';
 import { CSSStyleSheet } from './CSSStyleSheet';
+import { createVendorStyleSheet } from './vendorStylesheet';
 
 export class StyleSheetList extends Array<CSSStyleSheet> {
   static get [Symbol.species](): ArrayConstructor {
@@ -11,10 +12,12 @@ export class StyleSheetList extends Array<CSSStyleSheet> {
   }
 
   _styleNodes: HTMLCollectionImpl;
+  _vendorSheet: CSSStyleSheet;
   _updateSignal: RecursiveSignal<[]>;
   constructor(document: Document) {
     super();
     this._styleNodes = elementGetElementsByTagName(document, 'STYLE');
+    this._vendorSheet = createVendorStyleSheet();
     this._styleNodes._updateSignal.add(() => {
       this._update();
     });
@@ -29,12 +32,14 @@ export class StyleSheetList extends Array<CSSStyleSheet> {
         });
       };
     });
+    this._update();
   }
   _update(): void {
     this.length = 0;
     this._updateSignal._unregister();
     this.push(
-      ...this._styleNodes
+      this._vendorSheet,
+      ...[...this._styleNodes]
         .filter((node) => node instanceof HTMLStyleElement)
         .map((node) => node.sheet),
     );

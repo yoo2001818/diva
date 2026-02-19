@@ -1,6 +1,7 @@
 import { entry, sizeEntry } from './base';
 import {
   stringifyColor,
+  stringifyFontFamily,
   stringifySize,
   stringifyKeyword,
   stringifyNumber,
@@ -13,7 +14,11 @@ export const TEXT_SCHEMA = {
       () => v.color(),
     ),
   ),
-  // font-family
+  fontFamily: entry(
+    'fontFamily',
+    stringifyFontFamily,
+    (v) => v.fontFamily(),
+  ),
   fontSize: entry('fontSize', stringifySize, (v) =>
     v.oneOf(
       () =>

@@ -7,6 +7,7 @@ import {
   CSSNumber,
   CSSPercentage,
   CSSRgb,
+  CSSString,
   CSSUrl,
 } from '../dict';
 
@@ -240,6 +241,52 @@ export class Parser {
       return null;
     }
     return { type: 'identifier', value: result[0] };
+  }
+
+  string(): CSSString | null {
+    const prev = this._offset;
+    const doubleQuoted = this.match(/"([^"\\]|\\.)*"/y);
+    if (doubleQuoted != null) {
+      return { type: 'string', value: doubleQuoted[0].slice(1, -1) };
+    }
+    this.undo(prev);
+    const singleQuoted = this.match(/'([^'\\]|\\.)*'/y);
+    if (singleQuoted != null) {
+      return { type: 'string', value: singleQuoted[0].slice(1, -1) };
+    }
+    this.undo(prev);
+    return null;
+  }
+
+  fontFamily(): (CSSString | CSSIndentifier)[] | null {
+    const first = this.oneOf(
+      () => this.string(),
+      () => this.identifier(),
+    );
+    if (first == null) {
+      return null;
+    }
+    const output: (CSSString | CSSIndentifier)[] = [first];
+    while (true) {
+      const prev = this._offset;
+      this.ws();
+      const comma = this.match(/,/y);
+      if (comma == null) {
+        this.undo(prev);
+        break;
+      }
+      this.ws();
+      const next = this.oneOf(
+        () => this.string(),
+        () => this.identifier(),
+      );
+      if (next == null) {
+        this.undo(prev);
+        break;
+      }
+      output.push(next);
+    }
+    return output;
   }
 
   rgb(): CSSRgb | null {
